@@ -33,7 +33,7 @@
   <header class="site-header" role="banner">
     <div class="container header-inner">
       <a class="brand" href="#top" aria-label="WinAuto — на главную">
-        <img src="/assets/img/logo-winauto.png"" alt="WinAuto логотип" width="124" height="28" loading="eager" decoding="async">
+        <img src="/assets/img/logo-winauto.png" alt="WinAuto логотип" width="124" height="28" loading="eager" decoding="async">
       </a>
       <nav class="site-nav" aria-label="Основная навигация">
         <ul>
@@ -318,60 +318,89 @@
         <h2 id="calc-title">Калькулятор ориентировочной стоимости</h2>
         <p class="muted">Расчёт примерный и не является публичной офертой. Точные цифры закрепляются в договоре.</p>
 
-<form id="calc-form" class="calc-form" novalidate>
-  <div class="grid-3">
-    <label class="field">
-      <span>Страна</span>
-      <select id="country" required>
-        <option value="JP">Япония</option>
-        <option value="KR">Корея</option>
-        <option value="CN">Китай</option>
-      </select>
-    </label>
+        <form id="calc-form" class="calc-form" novalidate>
+          <div class="grid-3">
+            <label class="field">
+              <span>Страна</span>
+              <select id="country" required>
+                <option value="JP">Япония</option>
+                <option value="KR">Корея</option>
+                <option value="CN">Китай</option>
+              </select>
+            </label>
 
-    <!-- заменили блок Год выпуска на Возраст авто -->
-    <label class="field">
-      <span>Возраст авто</span>
-      <select id="car-age" required>
-        <option value="0-3">До 3 лет</option>
-        <option value="3-5">3–5 лет</option>
-        <option value="5plus">Старше 5 лет</option>
-      </select>
-    </label>
+            <!-- Возраст авто вместо года выпуска -->
+            <label class="field">
+              <span>Возраст авто</span>
+              <select id="car-age" required>
+                <option value="0-3">До 3 лет</option>
+                <option value="3-5">3–5 лет</option>
+                <option value="5plus">Старше 5 лет</option>
+              </select>
+            </label>
 
-    <label class="field">
-      <span>Тип силовой установки</span>
-      <select id="powertrain" required>
-        <option value="ice">ДВС (бензин/дизель)</option>
-        <option value="hybrid">Гибрид</option>
-        <option value="ev">Электро</option>
-      </select>
-    </label>
+            <label class="field">
+              <span>Тип силовой установки</span>
+              <select id="powertrain" required>
+                <option value="ice">ДВС (бензин/дизель)</option>
+                <option value="hybrid">Гибрид</option>
+                <option value="ev">Электро</option>
+              </select>
+            </label>
 
-    <label class="field">
-      <span>Объём двигателя (л)</span>
-      <input id="engine" type="number" step="0.1" min="0" placeholder="например, 1.8" />
-    </label>
+            <label class="field">
+              <span>Объём двигателя (л)</span>
+              <input id="engine" type="number" step="0.1" min="0" placeholder="например, 1.8" />
+            </label>
 
-    <label class="field">
-      <span>Цена лота / рынка (USD)</span>
-      <input id="price" type="number" min="0" step="100" placeholder="например, 12000" required />
-    </label>
+            <label class="field">
+              <span>Цена лота / рынка (USD)</span>
+              <input id="price" type="number" min="0" step="100" placeholder="например, 12000" required />
+            </label>
 
-    <label class="field">
-      <span>Курс USD → ₽</span>
-      <input id="rate" type="number" min="1" step="1" value="90" />
-    </label>
-  </div>
-</form>
+            <label class="field">
+              <span>Курс USD → ₽</span>
+              <input id="rate" type="number" min="1" step="0.01" value="90" />
+              <small class="muted" id="rate-note">Курс ЦБ: нажмите «Обновить»</small>
+            </label>
+          </div>
 
           <div class="calc-actions">
             <button type="button" id="calc-btn" class="btn btn-primary neon">Рассчитать</button>
+            <button type="button" id="rate-refresh" class="btn btn-outline">Обновить курс ЦБ</button>
             <a class="btn btn-outline" href="https://wa.me/79520821396" target="_blank" rel="noopener">Обсудить расчёт</a>
           </div>
         </form>
 
         <div id="calc-result" class="calc-result" aria-live="polite"></div>
+
+        <!-- ====== КУРСЫ ЦБ РФ (отдельный блок под калькулятором) ====== -->
+        <section class="section" id="rates" aria-labelledby="rates-title" style="padding-top:24px;">
+          <h2 id="rates-title">Курсы ЦБ РФ</h2>
+          <p class="muted" id="rates-date">Загружаю актуальные данные…</p>
+          <div class="table-wrap">
+            <table class="table-compare" role="table" aria-live="polite">
+              <thead>
+                <tr>
+                  <th>Валюта</th>
+                  <th>1 единица = ₽</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><th>JPY (японская иена)</th><td id="rate-JPY">—</td></tr>
+                <tr><th>KRW (корейская вона)</th><td id="rate-KRW">—</td></tr>
+                <tr><th>CNY (китайский юань)</th><td id="rate-CNY">—</td></tr>
+                <tr><th>USD (доллар США)</th><td id="rate-USD">—</td></tr>
+                <tr><th>EUR (евро)</th><td id="rate-EUR">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="calc-actions">
+            <button type="button" id="rates-refresh" class="btn btn-outline">Обновить курсы</button>
+          </div>
+        </section>
+        <!-- ====== /КУРСЫ ====== -->
+
       </div>
     </section>
 
@@ -518,7 +547,7 @@
     "url": "https://funnyfox45-glitch.github.io/",
     "email": "winautovl@gmail.com",
     "telephone": "+79502944467",
-    "logo": "https://funnyfox45-glitch.github.io/assets/img/logo.svg",
+    "logo": "https://funnyfox45-glitch.github.io/assets/img/logo-winauto.png",
     "sameAs": ["https://wa.me/79520821396"],
     "address": {
       "@type": "PostalAddress",
@@ -564,9 +593,85 @@
   }
   </script>
 
-  <!-- Scripts -->
+  <!-- Скрипт курсов ЦБ РФ -->
+  <script>
+  (function(){
+    const CBR_URL = 'https://www.cbr-xml-daily.ru/daily_json.js';
+    let cache = null;
+
+    async function getCBR(){
+      // пробуем кеш на сегодня
+      try{
+        const raw = localStorage.getItem('CBR_DAILY_JSON');
+        if(raw){
+          const data = JSON.parse(raw);
+          const today = new Date().toISOString().slice(0,10);
+          if(data.Date && data.Date.slice(0,10) === today){ cache = data; return data; }
+        }
+      }catch(e){}
+      const res = await fetch(CBR_URL,{cache:'no-store'});
+      const data = await res.json();
+      cache = data;
+      try{ localStorage.setItem('CBR_DAILY_JSON', JSON.stringify(data)); }catch(e){}
+      return data;
+    }
+
+    function perOne(valute){
+      // курс за 1 единицу валюты: Value / Nominal
+      return (valute.Value / valute.Nominal);
+    }
+
+    function setCell(id, value){
+      const el = document.getElementById(id);
+      if(el) el.textContent = value.toFixed(4).replace('.', ',');
+    }
+
+    async function renderRates(){
+      const dateEl = document.getElementById('rates-date');
+      try{
+        const data = await getCBR();
+        const d = new Date(data.Date);
+        if(dateEl) dateEl.textContent = 'Курсы ЦБ на ' + d.toLocaleDateString('ru-RU');
+
+        const need = ['USD','EUR','JPY','KRW','CNY'];
+        need.forEach(code=>{
+          const v = code==='RUB' ? {Value:1,Nominal:1} : data.Valute[code];
+          if(v){ setCell('rate-'+code, perOne(v)); }
+        });
+
+        // Заполняем поле курса USD для калькулятора
+        const rateInput = document.getElementById('rate');
+        if(rateInput && data.Valute.USD){
+          rateInput.value = perOne(data.Valute.USD).toFixed(2);
+          const note = document.getElementById('rate-note');
+          if(note) note.textContent = 'Курс ЦБ на ' + d.toLocaleDateString('ru-RU') + ' (1 USD = ' + perOne(data.Valute.USD).toFixed(2) + ' ₽)';
+        }
+      }catch(e){
+        if(dateEl) dateEl.textContent = 'Не удалось загрузить курсы ЦБ.';
+        console.warn(e);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      renderRates();
+      const btn1 = document.getElementById('rates-refresh');
+      const btn2 = document.getElementById('rate-refresh');
+      const refresh = async ()=>{
+        try{
+          const res = await fetch('https://www.cbr-xml-daily.ru/daily_json.js',{cache:'no-store'});
+          const data = await res.json();
+          cache = data;
+          try{ localStorage.setItem('CBR_DAILY_JSON', JSON.stringify(data)); }catch(e){}
+          renderRates();
+        }catch(e){ console.warn(e); }
+      };
+      if(btn1) btn1.addEventListener('click', refresh);
+      if(btn2) btn2.addEventListener('click', refresh);
+    });
+  })();
+  </script>
+
+  <!-- Ваши основные скрипты -->
   <script src="/assets/js/app.js" defer></script>
 </body>
 </html>
-
-
