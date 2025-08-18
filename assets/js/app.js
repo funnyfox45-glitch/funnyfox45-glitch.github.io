@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ${row('Доставка внутри Японии, аукционный сбор, агент', A, jpyToUSD(A), jpyToRUB(A))}
           ${row('Фрахт до Владивостока', V, jpyToUSD(V), jpyToRUB(V))}
           ${row('Гарантия от повреждений', G, jpyToUSD(G), jpyToRUB(G))}
-          ${Zusd ? row('Санкционный платёж', Zjpy, Zusd, usdToRUB(Zusd)) : ''}
+          ${Zusd ? row('Доставка санкционного авто', Zjpy, Zusd, usdToRUB(Zusd)) : ''}
           ${row('<strong>Итого (Япония)</strong>', sumJP_jpy, jpyToUSD(sumJP_jpy), sumJP_rub)}
 
           <tr><th colspan="4">Расходы в России</th></tr>
