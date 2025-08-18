@@ -318,45 +318,52 @@
         <h2 id="calc-title">Калькулятор ориентировочной стоимости</h2>
         <p class="muted">Расчёт примерный и не является публичной офертой. Точные цифры закрепляются в договоре.</p>
 
-        <form id="calc-form" class="calc-form" novalidate>
-          <div class="grid-3">
-            <label class="field">
-              <span>Страна</span>
-              <select id="country" required>
-                <option value="JP">Япония</option>
-                <option value="KR">Корея</option>
-                <option value="CN">Китай</option>
-              </select>
-            </label>
-            <label class="field">
-              <span>Год выпуска</span>
-              <select id="year" required>
-                <option>2025</option><option>2024</option><option>2023</option>
-                <option>2022</option><option>2021</option><option>2020</option>
-                <option>2019</option><option>2018</option>
-              </select>
-            </label>
-            <label class="field">
-              <span>Тип силовой установки</span>
-              <select id="powertrain" required>
-                <option value="ice">ДВС (бензин/дизель)</option>
-                <option value="hybrid">Гибрид</option>
-                <option value="ev">Электро</option>
-              </select>
-            </label>
-            <label class="field">
-              <span>Объём двигателя (л)</span>
-              <input id="engine" type="number" step="0.1" min="0" placeholder="например, 1.8" />
-            </label>
-            <label class="field">
-              <span>Цена лота / рынка (USD)</span>
-              <input id="price" type="number" min="0" step="100" placeholder="например, 12000" required />
-            </label>
-            <label class="field">
-              <span>Курс USD → ₽</span>
-              <input id="rate" type="number" min="1" step="1" value="90" />
-            </label>
-          </div>
+<form id="calc-form" class="calc-form" novalidate>
+  <div class="grid-3">
+    <label class="field">
+      <span>Страна</span>
+      <select id="country" required>
+        <option value="JP">Япония</option>
+        <option value="KR">Корея</option>
+        <option value="CN">Китай</option>
+      </select>
+    </label>
+
+    <!-- заменили блок Год выпуска на Возраст авто -->
+    <label class="field">
+      <span>Возраст авто</span>
+      <select id="car-age" required>
+        <option value="0-3">До 3 лет</option>
+        <option value="3-5">3–5 лет</option>
+        <option value="5plus">Старше 5 лет</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Тип силовой установки</span>
+      <select id="powertrain" required>
+        <option value="ice">ДВС (бензин/дизель)</option>
+        <option value="hybrid">Гибрид</option>
+        <option value="ev">Электро</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Объём двигателя (л)</span>
+      <input id="engine" type="number" step="0.1" min="0" placeholder="например, 1.8" />
+    </label>
+
+    <label class="field">
+      <span>Цена лота / рынка (USD)</span>
+      <input id="price" type="number" min="0" step="100" placeholder="например, 12000" required />
+    </label>
+
+    <label class="field">
+      <span>Курс USD → ₽</span>
+      <input id="rate" type="number" min="1" step="1" value="90" />
+    </label>
+  </div>
+</form>
 
           <div class="calc-actions">
             <button type="button" id="calc-btn" class="btn btn-primary neon">Рассчитать</button>
