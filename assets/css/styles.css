@@ -226,7 +226,8 @@ dialog::backdrop{background:rgba(2,6,23,.6)}
   .nav-toggle{display:flex;margin-left:auto}
   .grid-3,.grid-2{grid-template-columns:1fr}
   .hero{padding-top:56px}
-  /* Яркие карточки для секции "Почему мы?" */
+}
+/* Яркие карточки для секции "Почему мы?" */
 #why-us .card{
   position: relative;
   background: linear-gradient(180deg, rgba(0,210,255,.08), rgba(0,210,255,0) 40%) #0f172a;
@@ -245,4 +246,3 @@ dialog::backdrop{background:rgba(2,6,23,.6)}
 /* Неоновая точка-маркер между колонками (если используешь <ul> с буллитами) */
 #why-us li::marker { color: #00d2ff; }
 
-}
