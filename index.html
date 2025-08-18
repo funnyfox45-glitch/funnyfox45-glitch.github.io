@@ -325,7 +325,6 @@
               </select>
             </label>
 
-            <!-- Возраст авто вместо года выпуска -->
             <label class="field">
               <span>Возраст авто</span>
               <select id="car-age" required>
@@ -345,19 +344,22 @@
             </label>
 
             <label class="field">
-              <span>Объём двигателя (л)</span>
-              <input id="engine" type="number" step="0.1" min="0" placeholder="например, 1.8" />
+              <span>Объём двигателя (см³)</span>
+              <input id="engine-cc" type="number" step="1" min="0" placeholder="например, 1800" />
             </label>
 
             <label class="field">
-              <span>Цена лота / рынка (USD)</span>
-              <input id="price" type="number" min="0" step="100" placeholder="например, 12000" required />
+              <span>Валюта цены</span>
+              <select id="price-cur" required>
+                <option value="JPY">JPY</option>
+                <option value="KRW">KRW</option>
+                <option value="CNY">CNY</option>
+              </select>
             </label>
 
             <label class="field">
-              <span>Курс USD → ₽</span>
-              <input id="rate" type="number" min="1" step="0.01" value="90" />
-              <small class="muted" id="rate-note">Курс ЦБ: загружается…</small>
+              <span id="price-label">Цена лота / рынка (<span id="cur-label">JPY</span>)</span>
+              <input id="price" type="number" min="0" step="1" placeholder="например, 1200000" required />
             </label>
           </div>
 
@@ -373,6 +375,7 @@
           </div>
         </form>
 
+        <!-- Здесь появится таблица результата -->
         <div id="calc-result" class="calc-result" aria-live="polite"></div>
       </div>
     </section>
@@ -566,13 +569,12 @@
   }
   </script>
 
-  <!-- Скрипт курсов ЦБ РФ: компактная строка под калькулятором -->
+  <!-- Курсы ЦБ РФ (однострочно под калькулятором) -->
   <script>
   (function(){
     const CBR_URL = 'https://www.cbr-xml-daily.ru/daily_json.js';
-    function to2(n){ return n.toFixed(2).replace('.', ','); }
+    function to2(n){ return Number(n).toFixed(2).replace('.', ','); }
     function perOne(v){ return (v.Value / v.Nominal); }
-
     async function getDaily(){
       try{
         const cached = localStorage.getItem('CBR_DAILY_JSON');
@@ -587,18 +589,13 @@
       try{ localStorage.setItem('CBR_DAILY_JSON', JSON.stringify(data)); }catch(_){}
       return data;
     }
-
     async function render(){
       const title = document.getElementById('rates-title');
       const line  = document.getElementById('rates-inline');
-      const rateInput = document.getElementById('rate');
-      const note = document.getElementById('rate-note');
-
       try{
         const data = await getDaily();
         const d = new Date(data.Date).toLocaleDateString('ru-RU');
         if (title) title.textContent = 'Курсы ЦБ РФ на ' + d;
-
         const order = ['JPY','KRW','CNY','USD','EUR'];
         const parts = order.map(code=>{
           const v = data.Valute[code];
@@ -606,19 +603,11 @@
           return `${code} ${to2(perOne(v))} Р`;
         }).filter(Boolean);
         if(line) line.textContent = parts.join(' • ');
-
-        if(rateInput && data.Valute.USD){
-          rateInput.value = to2(perOne(data.Valute.USD));
-          if (note) note.textContent = `Курс ЦБ на ${d} (1 USD = ${to2(perOne(data.Valute.USD))} Р)`;
-        }
       }catch(e){
         if(title) title.textContent = 'Курсы ЦБ РФ: не удалось загрузить.';
         if(line) line.textContent = '';
-        if(note) note.textContent = 'Не удалось получить курс ЦБ.';
-        console.warn(e);
       }
     }
-
     document.addEventListener('DOMContentLoaded', render);
   })();
   </script>
