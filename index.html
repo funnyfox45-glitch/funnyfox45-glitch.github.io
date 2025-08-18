@@ -7,12 +7,8 @@
   <meta name="description" content="Покупка и доставка автомобилей из Японии, Кореи и Китая под ключ во Владивосток. Подбор, проверка, торги, логистика и таможня. Прозрачный договор, отчёты и фиксированные условия." />
   <link rel="canonical" href="https://funnyfox45-glitch.github.io/" />
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,
-  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>
-    <rect width='64' height='64' rx='12' fill='%230b1220'/>
-    <path d='M10 40h44l-4 8H14l-4-8Zm8-16h28l6 10H12l6-10Z' fill='%2300d2ff'/>
-  </svg>">
+  <!-- Favicon (встроенный SVG) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%230b1220'/><path d='M10 40h44l-4 8H14l-4-8Zm8-16h28l6 10H12l6-10Z' fill='%2300d2ff'/></svg>">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
@@ -361,46 +357,23 @@
             <label class="field">
               <span>Курс USD → ₽</span>
               <input id="rate" type="number" min="1" step="0.01" value="90" />
-              <small class="muted" id="rate-note">Курс ЦБ: нажмите «Обновить»</small>
+              <small class="muted" id="rate-note">Курс ЦБ: загружается…</small>
             </label>
           </div>
 
           <div class="calc-actions">
             <button type="button" id="calc-btn" class="btn btn-primary neon">Рассчитать</button>
-            <button type="button" id="rate-refresh" class="btn btn-outline">Обновить курс ЦБ</button>
             <a class="btn btn-outline" href="https://wa.me/79520821396" target="_blank" rel="noopener">Обсудить расчёт</a>
+          </div>
+
+          <!-- Однострочные курсы ЦБ РФ под кнопкой -->
+          <div id="rates-inline-wrap" class="muted" style="font-size:14px;margin-top:8px;">
+            <div id="rates-title" style="margin-bottom:4px;">Курсы ЦБ РФ на —</div>
+            <div id="rates-inline" aria-live="polite"></div>
           </div>
         </form>
 
         <div id="calc-result" class="calc-result" aria-live="polite"></div>
-
-        <!-- ====== КУРСЫ ЦБ РФ (отдельный блок под калькулятором) ====== -->
-        <section class="section" id="rates" aria-labelledby="rates-title" style="padding-top:24px;">
-          <h2 id="rates-title">Курсы ЦБ РФ</h2>
-          <p class="muted" id="rates-date">Загружаю актуальные данные…</p>
-          <div class="table-wrap">
-            <table class="table-compare" role="table" aria-live="polite">
-              <thead>
-                <tr>
-                  <th>Валюта</th>
-                  <th>1 единица = ₽</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><th>JPY (японская иена)</th><td id="rate-JPY">—</td></tr>
-                <tr><th>KRW (корейская вона)</th><td id="rate-KRW">—</td></tr>
-                <tr><th>CNY (китайский юань)</th><td id="rate-CNY">—</td></tr>
-                <tr><th>USD (доллар США)</th><td id="rate-USD">—</td></tr>
-                <tr><th>EUR (евро)</th><td id="rate-EUR">—</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="calc-actions">
-            <button type="button" id="rates-refresh" class="btn btn-outline">Обновить курсы</button>
-          </div>
-        </section>
-        <!-- ====== /КУРСЫ ====== -->
-
       </div>
     </section>
 
@@ -593,85 +566,65 @@
   }
   </script>
 
-  <!-- Скрипт курсов ЦБ РФ -->
+  <!-- Скрипт курсов ЦБ РФ: компактная строка под калькулятором -->
   <script>
   (function(){
     const CBR_URL = 'https://www.cbr-xml-daily.ru/daily_json.js';
-    let cache = null;
+    function to2(n){ return n.toFixed(2).replace('.', ','); }
+    function perOne(v){ return (v.Value / v.Nominal); }
 
-    async function getCBR(){
-      // пробуем кеш на сегодня
+    async function getDaily(){
       try{
-        const raw = localStorage.getItem('CBR_DAILY_JSON');
-        if(raw){
-          const data = JSON.parse(raw);
+        const cached = localStorage.getItem('CBR_DAILY_JSON');
+        if (cached){
+          const obj = JSON.parse(cached);
           const today = new Date().toISOString().slice(0,10);
-          if(data.Date && data.Date.slice(0,10) === today){ cache = data; return data; }
+          if (obj.Date && obj.Date.slice(0,10) === today) return obj;
         }
-      }catch(e){}
-      const res = await fetch(CBR_URL,{cache:'no-store'});
+      }catch(_){}
+      const res = await fetch(CBR_URL, {cache:'no-store'});
       const data = await res.json();
-      cache = data;
-      try{ localStorage.setItem('CBR_DAILY_JSON', JSON.stringify(data)); }catch(e){}
+      try{ localStorage.setItem('CBR_DAILY_JSON', JSON.stringify(data)); }catch(_){}
       return data;
     }
 
-    function perOne(valute){
-      // курс за 1 единицу валюты: Value / Nominal
-      return (valute.Value / valute.Nominal);
-    }
+    async function render(){
+      const title = document.getElementById('rates-title');
+      const line  = document.getElementById('rates-inline');
+      const rateInput = document.getElementById('rate');
+      const note = document.getElementById('rate-note');
 
-    function setCell(id, value){
-      const el = document.getElementById(id);
-      if(el) el.textContent = value.toFixed(4).replace('.', ',');
-    }
-
-    async function renderRates(){
-      const dateEl = document.getElementById('rates-date');
       try{
-        const data = await getCBR();
-        const d = new Date(data.Date);
-        if(dateEl) dateEl.textContent = 'Курсы ЦБ на ' + d.toLocaleDateString('ru-RU');
+        const data = await getDaily();
+        const d = new Date(data.Date).toLocaleDateString('ru-RU');
+        if (title) title.textContent = 'Курсы ЦБ РФ на ' + d;
 
-        const need = ['USD','EUR','JPY','KRW','CNY'];
-        need.forEach(code=>{
-          const v = code==='RUB' ? {Value:1,Nominal:1} : data.Valute[code];
-          if(v){ setCell('rate-'+code, perOne(v)); }
-        });
+        const order = ['JPY','KRW','CNY','USD','EUR'];
+        const parts = order.map(code=>{
+          const v = data.Valute[code];
+          if(!v) return null;
+          return `${code} ${to2(perOne(v))} Р`;
+        }).filter(Boolean);
+        if(line) line.textContent = parts.join(' • ');
 
-        // Заполняем поле курса USD для калькулятора
-        const rateInput = document.getElementById('rate');
         if(rateInput && data.Valute.USD){
-          rateInput.value = perOne(data.Valute.USD).toFixed(2);
-          const note = document.getElementById('rate-note');
-          if(note) note.textContent = 'Курс ЦБ на ' + d.toLocaleDateString('ru-RU') + ' (1 USD = ' + perOne(data.Valute.USD).toFixed(2) + ' ₽)';
+          rateInput.value = to2(perOne(data.Valute.USD));
+          if (note) note.textContent = `Курс ЦБ на ${d} (1 USD = ${to2(perOne(data.Valute.USD))} Р)`;
         }
       }catch(e){
-        if(dateEl) dateEl.textContent = 'Не удалось загрузить курсы ЦБ.';
+        if(title) title.textContent = 'Курсы ЦБ РФ: не удалось загрузить.';
+        if(line) line.textContent = '';
+        if(note) note.textContent = 'Не удалось получить курс ЦБ.';
         console.warn(e);
       }
     }
 
-    document.addEventListener('DOMContentLoaded', ()=>{
-      renderRates();
-      const btn1 = document.getElementById('rates-refresh');
-      const btn2 = document.getElementById('rate-refresh');
-      const refresh = async ()=>{
-        try{
-          const res = await fetch('https://www.cbr-xml-daily.ru/daily_json.js',{cache:'no-store'});
-          const data = await res.json();
-          cache = data;
-          try{ localStorage.setItem('CBR_DAILY_JSON', JSON.stringify(data)); }catch(e){}
-          renderRates();
-        }catch(e){ console.warn(e); }
-      };
-      if(btn1) btn1.addEventListener('click', refresh);
-      if(btn2) btn2.addEventListener('click', refresh);
-    });
+    document.addEventListener('DOMContentLoaded', render);
   })();
   </script>
 
-  <!-- Ваши основные скрипты -->
+  <!-- Основные скрипты сайта -->
   <script src="/assets/js/app.js" defer></script>
 </body>
 </html>
+
