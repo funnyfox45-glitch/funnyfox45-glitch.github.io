@@ -213,7 +213,16 @@ dialog::backdrop{background:rgba(2,6,23,.6)}
 /* ===== Animations ===== */
 .reveal{opacity:0;transform:translateY(12px);transition:opacity .6s ease, transform .6s ease}
 .reveal.visible{opacity:1;transform:translateY(0)}
-.hero-media img{filter: drop-shadow(0 10px 40px rgba(0,210,255,.25));border-radius:16px}
+
+/* ---------- HERO IMAGE TUNING (для 960×355) ---------- */
+.hero-media{aspect-ratio: 960 / 355;}              /* сохраняем пропорции блока */
+.hero-media img{
+  width:100%;                                      /* не растягиваем больше контейнера */
+  height:auto;
+  image-rendering:auto;                             /* корректный ресемплинг */
+  filter: drop-shadow(0 10px 40px rgba(0,210,255,.25));
+  border-radius:16px;
+}
 
 /* ===== Responsive ===== */
 @media (max-width: 960px){
@@ -245,4 +254,3 @@ dialog::backdrop{background:rgba(2,6,23,.6)}
 
 /* Неоновая точка-маркер между колонками (если используешь <ul> с буллитами) */
 #why-us li::marker { color: #00d2ff; }
-
