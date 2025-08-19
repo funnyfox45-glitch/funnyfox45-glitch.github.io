@@ -85,7 +85,14 @@
           </ul>
         </div>
         <div class="hero-media" aria-hidden="true">
-          <img src="/assets/img/logo-hero.png" alt="" width="560" height="360" loading="lazy" decoding="async">
+          <!-- ТОЛЬКО подгонка изображения под 960×355 + ретина -->
+          <img
+            src="/assets/img/logo-hero.png"
+            srcset="/assets/img/logo-hero.png 1x, /assets/img/logo-hero@2x.png 2x"
+            sizes="(min-width: 1024px) 560px, 90vw"
+            width="960" height="355"
+            alt=""
+            loading="lazy" decoding="async">
         </div>
       </div>
     </section>
@@ -311,7 +318,7 @@
     <section id="calc" class="section" aria-labelledby="calc-title">
       <div class="container">
         <h2 id="calc-title">Калькулятор ориентировочной стоимости</h2>
-        <p class="muted">Расчёт примерный и не является публичной офертой. Точные значения просьба уточнять у менеджера.</p>
+      <p class="muted">Расчёт примерный и не является публичной офертой. Точные значения просьба уточнять у менеджера.</p>
 
         <form id="calc-form" class="calc-form" novalidate>
           <div class="grid-3">
@@ -615,4 +622,3 @@
   <script src="/assets/js/app.js" defer></script>
 </body>
 </html>
-
