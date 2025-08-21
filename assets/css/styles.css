@@ -254,3 +254,40 @@ dialog::backdrop{background:rgba(2,6,23,.6)}
 
 /* Неоновая точка-маркер между колонками (если используешь <ul> с буллитами) */
 #why-us li::marker { color: #00d2ff; }
+/* --- Социальные кнопки в контактах --- */
+.socials{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:10px;
+}
+.socials .soc{
+  width:48px; height:48px;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:999px;
+  background:#0f172a;                 /* базовый фон-«таблетка» */
+  border:1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: transform .18s ease, box-shadow .18s ease, background .2s;
+}
+.socials .soc img{ width:28px; height:28px; display:block; }
+
+/* лёгкие фирменные ховеры (подсветка) */
+.socials .soc-wa:hover{ background:#25D36622; box-shadow:0 0 0 2px #25D36655 inset, var(--shadow); transform:translateY(-2px); }
+.socials .soc-tg:hover{ background:#229ED922; box-shadow:0 0 0 2px #229ED955 inset, var(--shadow); transform:translateY(-2px); }
+.socials .soc-ig:hover{ background:#E1306C22; box-shadow:0 0 0 2px #E1306C55 inset, var(--shadow); transform:translateY(-2px); }
+.socials .soc-yt:hover{ background:#FF000022; box-shadow:0 0 0 2px #FF000055 inset, var(--shadow); transform:translateY(-2px); }
+.socials .soc-vk:hover{ background:#0077FF22; box-shadow:0 0 0 2px #0077FF55 inset, var(--shadow); transform:translateY(-2px); }
+
+/* --- Выровнять кнопки формы внизу и сделать одинаковой высоты --- */
+.lead-form .lead-actions{
+  display:flex;
+  gap:12px;
+  align-items:stretch;    /* обе кнопки одной высоты */
+  margin-top:18px;        /* опустить чуть ниже */
+}
+.lead-form .lead-actions .btn{
+  height:48px;            /* одинаковая высота для <button> и <a> */
+  line-height:48px;
+}
+
