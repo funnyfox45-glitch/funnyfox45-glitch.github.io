@@ -438,45 +438,65 @@
     </section>
 
     <!-- Контакты -->
-    <section id="contacts" class="section" aria-labelledby="contacts-title">
-      <div class="container">
-        <h2 id="contacts-title">Контакты</h2>
-        <div class="contacts-wrap">
-          <div class="contacts-list">
-            <a class="contact-link" href="tel:+79502944467" aria-label="Позвонить нам">+7 950 294-44-67</a>
-            <a class="contact-link" href="https://wa.me/79520821396" target="_blank" rel="noopener">WhatsApp</a>
-            <a class="contact-link" href="mailto:winautovl@gmail.com">Email: winautovl@gmail.com</a>
-            <p class="muted">Работаем во Владивостоке и доставляем в любые регионы. Ответим в рабочее время.</p>
-          </div>
+   <section id="contacts" class="section" aria-labelledby="contacts-title">
+  <div class="container">
+    <h2 id="contacts-title">Контакты</h2>
+    <div class="contacts-wrap">
+      <div class="contacts-list">
+        <a class="contact-link" href="tel:+79502944467" aria-label="Позвонить нам">+7 950 294-44-67</a>
+        <a class="contact-link" href="https://wa.me/79520821396" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="contact-link" href="mailto:winautovl@gmail.com">Email: winautovl@gmail.com</a>
+        <p class="muted">Работаем во Владивостоке и доставляем в любые регионы. Ответим в рабочее время.</p>
 
-          <form id="lead-form" class="lead-form" aria-label="Короткая форма заявки">
-            <div class="grid-2">
-              <label class="field">
-                <span>Имя</span>
-                <input type="text" id="f-name" name="name" placeholder="Ваше имя" required>
-              </label>
-              <label class="field">
-                <span>Телефон</span>
-                <input type="tel" id="f-phone" name="phone" placeholder="+7..." required>
-              </label>
-              <label class="field">
-                <span>Страна/тип авто</span>
-                <input type="text" id="f-type" name="type" placeholder="Япония / Корея / Китай, класс авто" required>
-              </label>
-              <label class="field">
-                <span>Комментарий</span>
-                <input type="text" id="f-comment" name="comment" placeholder="Бюджет, желаемые опции">
-              </label>
-            </div>
-            <div class="lead-actions">
-              <button type="submit" class="btn btn-primary">Отправить</button>
-              <a class="btn btn-outline" href="https://wa.me/79520821396" target="_blank" rel="noopener">Написать в WhatsApp</a>
-            </div>
-            <p class="form-note muted">Отправка без сервера — письмо откроется в вашем почтовом клиенте.</p>
-          </form>
+        <!-- Социальные сети -->
+        <div class="socials" aria-label="Мы в соцсетях">
+          <a class="soc soc-wa" href="https://wa.me/79520821396" target="_blank" rel="noopener" aria-label="Мы в WhatsApp">
+            <img src="/assets/img/social/whatsapp.png" width="40" height="40" alt="">
+          </a>
+          <a class="soc soc-tg" href="https://t.me/ВАШ_НИК" target="_blank" rel="noopener" aria-label="Мы в Telegram">
+            <img src="/assets/img/social/telegram.png" width="40" height="40" alt="">
+          </a>
+          <a class="soc soc-ig" href="https://www.instagram.com/ВАШ_НИК" target="_blank" rel="noopener" aria-label="Мы в Instagram">
+            <img src="/assets/img/social/instagram.png" width="40" height="40" alt="">
+          </a>
+          <a class="soc soc-yt" href="https://www.youtube.com/@ВАШ_КАНАЛ" target="_blank" rel="noopener" aria-label="Мы на YouTube">
+            <img src="/assets/img/social/youtube.png" width="40" height="40" alt="">
+          </a>
+          <a class="soc soc-vk" href="https://vk.com/ВАША_СТРАНИЦА" target="_blank" rel="noopener" aria-label="Мы во ВКонтакте">
+            <img src="/assets/img/social/vk.png" width="40" height="40" alt="">
+          </a>
         </div>
+        <!-- /Социальные сети -->
       </div>
-    </section>
+
+      <form id="lead-form" class="lead-form" aria-label="Короткая форма заявки">
+        <div class="grid-2">
+          <label class="field">
+            <span>Имя</span>
+            <input type="text" id="f-name" name="name" placeholder="Ваше имя" required>
+          </label>
+          <label class="field">
+            <span>Телефон</span>
+            <input type="tel" id="f-phone" name="phone" placeholder="+7..." required>
+          </label>
+          <label class="field">
+            <span>Страна/тип авто</span>
+            <input type="text" id="f-type" name="type" placeholder="Япония / Корея / Китай, класс авто" required>
+          </label>
+          <label class="field">
+            <span>Комментарий</span>
+            <input type="text" id="f-comment" name="comment" placeholder="Бюджет, желаемые опции">
+          </label>
+        </div>
+        <div class="lead-actions">
+          <button type="submit" class="btn btn-primary">Отправить</button>
+          <a class="btn btn-outline" href="https://wa.me/79520821396" target="_blank" rel="noopener">Написать в WhatsApp</a>
+        </div>
+        <p class="form-note muted">Отправка без сервера — письмо откроется в вашем почтовом клиенте.</p>
+      </form>
+    </div>
+  </div>
+</section>
   </main>
 
   <!-- Подвал -->
