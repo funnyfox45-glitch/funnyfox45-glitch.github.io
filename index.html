@@ -469,7 +469,8 @@
         <!-- /Социальные сети -->
       </div>
 
-      <form id="lead-form" class="lead-form" aria-label="Короткая форма заявки">
+      <form id="lead-form" class="lead-form" aria-label="Короткая форма заявки"
+          action="nameless-rice-7b95.funnyfox45.workers.dev" method="POST">
         <div class="grid-2">
           <label class="field">
             <span>Имя</span>
@@ -640,5 +641,43 @@
 
   <!-- Основные скрипты сайта -->
   <script src="/assets/js/app.js" defer></script>
+  <script>
+  (function(){
+    const form = document.getElementById('lead-form');
+    const status = document.getElementById('lead-status') || (function(){
+      const p = document.createElement('p');
+      p.className = 'form-note muted';
+      p.id = 'lead-status';
+      p.setAttribute('aria-live', 'polite');
+      form.appendChild(p);
+      return p;
+    })();
+
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      status.textContent = 'Отправляем…';
+
+      const data = new FormData(form);
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: data,
+          headers: { 'Accept': 'application/json' } // скажем воркеру, что хотим JSON-ответ
+        });
+        if (res.ok) {
+          form.reset();
+          status.textContent = 'Заявка отправлена! Мы свяжемся с вами.';
+        } else {
+          status.textContent = 'Не удалось отправить. Попробуйте ещё раз или напишите в WhatsApp.';
+        }
+      } catch {
+        status.textContent = 'Сбой сети. Попробуйте ещё раз позже.';
+      }
+    });
+  })();
+</script>
+  
 </body>
 </html>
