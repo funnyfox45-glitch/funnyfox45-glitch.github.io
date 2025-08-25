@@ -1,9 +1,8 @@
-/* ===== WinAuto — фронтенд ===== */
+/* ===== WinAuto — фронтенд (с расчётом JP/KR/CN) ===== */
 document.addEventListener('DOMContentLoaded', () => {
-  /* Год в подвале */
+  /* --- стандартные хелперы/навигация/FAQ/модалки/анимации --- */
   const y = document.getElementById('year'); if (y) y.textContent = new Date().getFullYear();
 
-  /* Навигация */
   const toggle = document.querySelector('.nav-toggle');
   const mobile = document.getElementById('mobile-menu');
   if (toggle && mobile) {
@@ -14,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* Табы */
   const tabs = document.querySelectorAll('.tab');
   const panels = document.querySelectorAll('.tab-panels [role="tabpanel"]');
   tabs.forEach(btn => btn.addEventListener('click', () => {
@@ -24,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById(btn.getAttribute('aria-controls')).hidden = false;
   }));
 
-  /* FAQ */
   document.querySelectorAll('.acc-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const open = btn.getAttribute('aria-expanded') === 'true';
@@ -33,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* Модалки */
   document.querySelectorAll('[data-modal]').forEach(link => {
     link.addEventListener('click', e => {
       e.preventDefault();
@@ -42,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog')?.close()));
 
-  /* Плавное появление */
   const io = new IntersectionObserver((entries)=>entries.forEach(e=>{
     if (e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }
   }), {threshold:.15});
@@ -50,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ===== Курсы ЦБ РФ ===== */
   const CBR_URL = 'https://www.cbr-xml-daily.ru/daily_json.js';
-  // Резерв (RUB за 1 ед.)
   const FALLBACK = { USD: 90, EUR: 98, JPY: 0.55, CNY: 12.0, KRW: 0.07, RUB: 1 };
   const state = { ratesRubPerUnit: { ...FALLBACK }, date: null };
 
@@ -116,20 +110,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if (note) note.textContent = `Курс ЦБ на ${state.date} (1 USD = ${to2(state.ratesRubPerUnit.USD)} Р)`;
     }
   }
-
   loadCbrSafe();
 
   /* ===== Калькулятор ===== */
   const elCountry   = document.getElementById('country');
   const elAge       = document.getElementById('car-age');
   const elPrice     = document.getElementById('price');
-  const elPriceCur  = document.getElementById('price-cur');  // если есть (JPY/KRW/CNY/USD)
-  const elEngineCc  = document.getElementById('engine-cc');  // если есть (см³)
-  const elEngineL   = document.getElementById('engine');     // если литры
+  const elPriceCur  = document.getElementById('price-cur');  // JPY/KRW/CNY
+  const elEngineCc  = document.getElementById('engine-cc');
+  const elEngineL   = document.getElementById('engine');
   const elCalcBtn   = document.getElementById('calc-btn');
   const elResult    = document.getElementById('calc-result');
 
-  // санкционный (USD) при >1800 см³
+  /* --- санкционный фрахт (только Япония) в USD --- */
   function sanctionUSD(priceJPY){
     if (priceJPY <= 999_999)   return 2600;
     if (priceJPY <= 1_999_999) return 3000;
@@ -139,13 +132,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return priceJPY * 0.00003 + 3000;
   }
 
-  // Пошлина (RUB)
-  function customsDutyRub(ageCat, engineCc, priceJPY){
+  /* --- Пошлина (руб) по вашей формуле, цена в произвольной валюте --- */
+  function customsDutyRub(ageCat, engineCc, price, priceCur){
     const rubPerEUR = state.ratesRubPerUnit.EUR;
-    const rubPerJPY = state.ratesRubPerUnit.JPY;
-    if (!rubPerEUR || !rubPerJPY) return 0;
+    const rubPerFrom = state.ratesRubPerUnit[priceCur];
+    if (!rubPerEUR || !rubPerFrom) return 0;
 
-    const eurPrice = priceJPY * (rubPerJPY / rubPerEUR); // цена авто в EUR
+    const eurPrice = price * (rubPerFrom / rubPerEUR); // цена авто в EUR
     const e = engineCc;
     let dutyEUR = 0;
 
@@ -163,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (e <= 2300) dutyEUR = 2.7*e;
       else if (e <= 3000) dutyEUR = 3.0*e;
       else dutyEUR = 3.6*e;
-    } else { // до 3
+    } else { // до 3 лет
       const ceil = p => eurPrice * p;
       const byCc = coef => e * coef;
       if (eurPrice <= 8500)          dutyEUR = Math.max(ceil(0.54), byCc(2.5));
@@ -173,10 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (eurPrice <= 169000)   dutyEUR = Math.max(ceil(0.48), byCc(15));
       else                           dutyEUR = Math.max(ceil(0.48), byCc(20));
     }
-    return dutyEUR * rubPerEUR; // в рубли
+    return dutyEUR * rubPerEUR; // в рублях
   }
 
-  // Утиль (RUB)
+  /* --- Утилизационный сбор (руб) --- */
   function utilRub(ageCat, engineCc){
     let coef = 0.17;
     if (ageCat === '0-3'){
@@ -195,114 +188,170 @@ document.addEventListener('DOMContentLoaded', () => {
     return 20000 * coef;
   }
 
-  const row = (title, jpy='', usd='', rub='') => {
-    return `<tr><th scope="row">${title}</th>
-      <td>${addCur(jpy,'JPY')}</td>
-      <td>${addCur(usd,'USD')}</td>
-      <td>${addCur(rub,'₽')}</td></tr>`;
-  };
+  /* --- генераторы строк/таблиц --- */
+  const row = (title, a='', b='', c='') =>
+    `<tr><th scope="row">${title}</th><td>${a || '—'}</td><td>${b || '—'}</td><td>${c || '—'}</td></tr>`;
 
+  const amountCells = (sum, cur) => [
+    addCur(sum, cur),
+    addCur(convert(sum, cur, 'USD'), 'USD'),
+    addCur(convert(sum, cur, 'RUB'), '₽'),
+  ];
+
+  /* ====== Страны ====== */
+
+  // Япония (без изменений по структуре)
   function renderJP({ priceJPY, ageCat, engineCc }){
-    const jpyToUSD = n => convert(n,'JPY','USD');
-    const jpyToRUB = n => convert(n,'JPY','RUB');
-    const usdToJPY = n => convert(n,'USD','JPY');
-    const usdToRUB = n => convert(n,'USD','RUB');
-    const rubToJPY = n => convert(n,'RUB','JPY');
-    const rubToUSD = n => convert(n,'RUB','USD');
+    const cur = 'JPY';
+    const inside = 140000;
+    const freight = 70000;
+    const insure  = 50000;
+    const sancUSD = engineCc > 1800 ? sanctionUSD(priceJPY) : 0;
+    const sancJPY = sancUSD ? convert(sancUSD,'USD','JPY') : 0;
 
-    // Расходы в Японии
-    const insideJP = 140000; // внутр. доставка/сборы/агент
-    const freight  = 70000;
-    const insure   = 50000;
-    const sanction = engineCc > 1800 ? sanctionUSD(priceJPY) : 0; // USD
+    const sumCountry = priceJPY + inside + freight + insure + sancJPY;
 
-    const A = insideJP;
-    const B = priceJPY;
-    const V = freight;
-    const G = insure;
-    const Zusd = sanction;
-    const Zjpy = Zusd ? usdToJPY(Zusd) : 0;
+    const dutyR = customsDutyRub(ageCat, engineCc, priceJPY, 'JPY');
+    const utilR = utilRub(ageCat, engineCc);
+    const svh = 75000, lab=5000, fee=50000;
+    const sumRU = dutyR + utilR + svh + lab + fee;
+    const totalRub = convert(sumCountry,'JPY','RUB') + sumRU;
 
-    const sumJP_jpy = A + B + V + G + Zjpy;
-    const sumJP_rub = jpyToRUB(sumJP_jpy);
-
-    // Расходы в России
-    const dutyR = customsDutyRub(ageCat, engineCc, priceJPY); // пошлина (RUB)
-    const utilR = utilRub(ageCat, engineCc);                  // утиль (RUB)
-    const svh   = 75000;  // СВХ/оформление/СБКТС/доставка (RUB)
-    const lab   = 5000;   // лаборатория (RUB)
-    const fee   = 50000;  // комиссия WinAuto (RUB)
-
-    const sumRU_rub = dutyR + utilR + svh + lab + fee;
-
-    // Итог
-    const totalRub = sumJP_rub + sumRU_rub;
-
-    // Рендер
     let html = `
       <div class="result-total" style="margin-bottom:8px">
         <strong>ИТОГО ЦЕНА В ГОР. Владивосток</strong> — <span style="color:var(--primary)">${fmtInt(totalRub)} ₽</span>
       </div>
-      <div class="table-wrap">
-      <table class="table-compare" role="table">
-        <thead><tr>
-          <th>Статья</th><th>JPY</th><th>USD</th><th>RUB</th>
-        </tr></thead>
+      <div class="table-wrap"><table class="table-compare">
+        <thead><tr><th>Статья</th><th>JPY</th><th>USD</th><th>RUB</th></tr></thead>
         <tbody>
           <tr><th colspan="4">Расходы в Японии</th></tr>
-          ${row('Аукционная стоимость', B, jpyToUSD(B), jpyToRUB(B))}
-          ${row('Доставка внутри Японии, аукционный сбор, агент', A, jpyToUSD(A), jpyToRUB(A))}
-          ${row('Фрахт до Владивостока', V, jpyToUSD(V), jpyToRUB(V))}
-          ${row('Гарантия от повреждений', G, jpyToUSD(G), jpyToRUB(G))}
-          ${Zusd ? row('Доставка санкционного авто', Zjpy, Zusd, usdToRUB(Zusd)) : ''}
-          ${row('<strong>Итого (Япония)</strong>', sumJP_jpy, jpyToUSD(sumJP_jpy), sumJP_rub)}
+          ${row('Аукционная стоимость', ...amountCells(priceJPY,cur))}
+          ${row('Доставка внутри Японии, аукционный сбор, агент', ...amountCells(inside,cur))}
+          ${row('Фрахт до Владивостока', ...amountCells(freight,cur))}
+          ${row('Гарантия от повреждений', ...amountCells(insure,cur))}
+          ${sancUSD ? row('Доставка санкционного авто', ...amountCells(sancJPY,cur)) : ''}
+          ${row('<strong>Итого (Япония)</strong>', ...amountCells(sumCountry,cur))}
 
           <tr><th colspan="4">Расходы в России</th></tr>
-          ${row('Таможенная пошлина', '', rubToUSD(dutyR), dutyR)}
-          ${row('Утилизационный сбор', '', rubToUSD(utilR), utilR)}
-          ${row('СВХ/оформление/СБКТС/доставка', '', rubToUSD(svh), svh)}
-          ${row('Лаборатория', '', rubToUSD(lab), lab)}
-          ${row('Комиссия WinAuto', '', rubToUSD(fee), fee)}
-          ${row('<strong>Итого (Россия)</strong>', '', rubToUSD(sumRU_rub), sumRU_rub)}
-        </tbody>
-      </table></div>
-    `;
+          ${row('Таможенная пошлина', '', addCur(convert(dutyR,'RUB','USD'),'USD'), addCur(dutyR,'₽'))}
+          ${row('Утилизационный сбор', '', addCur(convert(utilR,'RUB','USD'),'USD'), addCur(utilR,'₽'))}
+          ${row('СВХ/оформление/СБКТС/доставка', '', addCur(convert(svh,'RUB','USD'),'USD'), addCur(svh,'₽'))}
+          ${row('Лаборатория', '', addCur(convert(lab,'RUB','USD'),'USD'), addCur(lab,'₽'))}
+          ${row('Комиссия WinAuto', '', addCur(convert(fee,'RUB','USD'),'USD'), addCur(fee,'₽'))}
+          ${row('<strong>Итого (Россия)</strong>', '', addCur(convert(sumRU,'RUB','USD'),'USD'), addCur(sumRU,'₽'))}
+        </tbody></table></div>`;
     return html;
   }
 
+  // Общий рендер для KR и CN
+  function renderGenericCountry({ country, cur, labels, price, ageCat, engineCc, inside, freight, insure }){
+    const sumCountry = price + inside + (freight||0) + insure;
+
+    const dutyR = customsDutyRub(ageCat, engineCc, price, cur);
+    const utilR = utilRub(ageCat, engineCc);
+    const svh = 100000, lab = 5000, fee = 50000; // как вы просили
+    const sumRU = dutyR + utilR + svh + lab + fee;
+
+    const totalRub = convert(sumCountry, cur, 'RUB') + sumRU;
+
+    let html = `
+      <div class="result-total" style="margin-bottom:8px">
+        <strong>ИТОГО ЦЕНА В ГОР. Владивосток</strong> — <span style="color:var(--primary)">${fmtInt(totalRub)} ₽</span>
+      </div>
+      <div class="table-wrap"><table class="table-compare">
+        <thead><tr><th>Статья</th><th>${cur}</th><th>USD</th><th>RUB</th></tr></thead>
+        <tbody>
+          <tr><th colspan="4">${labels.countryBlock}</th></tr>
+          ${row(labels.priceRow, ...amountCells(price,cur))}
+          ${row(labels.insideRow, ...amountCells(inside,cur))}
+          ${freight ? row(labels.freightRow, ...amountCells(freight,cur)) : ''}
+          ${row(labels.damageRow, ...amountCells(insure,cur))}
+          ${row('<strong>Итого ('+labels.countryShort+')</strong>', ...amountCells(sumCountry,cur))}
+
+          <tr><th colspan="4">Расходы в России</th></tr>
+          ${row('Таможенная пошлина', '', addCur(convert(dutyR,'RUB','USD'),'USD'), addCur(dutyR,'₽'))}
+          ${row('Утилизационный сбор', '', addCur(convert(utilR,'RUB','USD'),'USD'), addCur(utilR,'₽'))}
+          ${row('Выгрузка/СВХ/оформление/СБКТС/доставка', '', addCur(convert(svh,'RUB','USD'),'USD'), addCur(svh,'₽'))}
+          ${row('Расходы лаборатории', '', addCur(convert(lab,'RUB','USD'),'USD'), addCur(lab,'₽'))}
+          ${row('Комиссия WinAuto', '', addCur(convert(fee,'RUB','USD'),'USD'), addCur(fee,'₽'))}
+          ${row('<strong>Итого (Россия)</strong>', '', addCur(convert(sumRU,'RUB','USD'),'USD'), addCur(sumRU,'₽'))}
+        </tbody></table></div>`;
+    return html;
+  }
+
+  function renderKR({ priceKRW, ageCat, engineCc }){
+    return renderGenericCountry({
+      country: 'KR',
+      cur: 'KRW',
+      labels: {
+        countryBlock: 'Расходы в Корее',
+        countryShort: 'Корея',
+        priceRow: 'Стоимость авто в Корее',
+        insideRow: 'Расходы по доставке внутри Кореи, дилерская комиссия',
+        freightRow: 'Фрахт до Владивостока',
+        damageRow: 'Гарантия от повреждений авто',
+      },
+      price: priceKRW,
+      ageCat, engineCc,
+      inside: 1_500_000,
+      freight: 1_000_000,
+      insure: 150_000
+    });
+  }
+
+  function renderCN({ priceCNY, ageCat, engineCc }){
+    return renderGenericCountry({
+      country: 'CN',
+      cur: 'CNY',
+      labels: {
+        countryBlock: 'Расходы в Китае',
+        countryShort: 'Китай',
+        priceRow: 'Стоимость авто в Китае',
+        insideRow: 'Расходы по доставке внутри Китая',
+        // по ТЗ фрахт отсутствует
+        damageRow: 'Гарантия от повреждений авто',
+      },
+      price: priceCNY,
+      ageCat, engineCc,
+      inside: 20_000,
+      freight: 0,             // нет фрахта
+      insure: 5_000
+    });
+  }
+
+  /* === сводка/рендер по кнопке === */
   function buildResult(){
     if (!elResult) return;
-    const country = (elCountry?.value || 'JP');
+
+    const country = (elCountry?.value || 'JP');   // JP / KR / CN
     const ageCat  = (elAge?.value || '3-5');
 
-    // цена → JPY
-    let priceJPY = 0;
-    const priceVal = Number(elPrice?.value || 0);
-    if (elPriceCur) {
-      const cur = elPriceCur.value || 'JPY';
-      priceJPY = convert(priceVal, cur, 'JPY');
-    } else {
-      // текущая разметка: price — USD
-      priceJPY = convert(priceVal, 'USD', 'JPY');
-    }
-
-    // объём → см³
     let engineCc = 0;
     if (elEngineCc) engineCc = Number(elEngineCc.value || 0);
     else if (elEngineL) engineCc = Math.round(Number(elEngineL.value || 0) * 1000);
 
-    if (!priceJPY || !engineCc){
+    const priceVal = Number(elPrice?.value || 0);
+    const cur = elPriceCur?.value || 'JPY';
+
+    if (!priceVal || !engineCc){
       elResult.innerHTML = `<p class="muted">Введите цену и объём двигателя для расчёта.</p>`;
       return;
     }
 
     if (country === 'JP'){
+      const priceJPY = convert(priceVal, cur, 'JPY');
       elResult.innerHTML = renderJP({ priceJPY, ageCat, engineCc });
-    } else {
-      elResult.innerHTML = `<p class="muted">Пока реализован расчёт для Японии. Для Кореи и Китая добавлю после того, как утвердим формулы.</p>`;
+    } else if (country === 'KR'){
+      const priceKRW = convert(priceVal, cur, 'KRW');
+      elResult.innerHTML = renderKR({ priceKRW, ageCat, engineCc });
+    } else if (country === 'CN'){
+      const priceCNY = convert(priceVal, cur, 'CNY');
+      elResult.innerHTML = renderCN({ priceCNY, ageCat, engineCc });
     }
   }
 
   elCalcBtn?.addEventListener('click', buildResult);
+});
+
 });
 
