@@ -290,4 +290,67 @@ dialog::backdrop{background:rgba(2,6,23,.6)}
   height:48px;            /* одинаковая высота для <button> и <a> */
   line-height:48px;
 }
+/* === Calc: стили акцентов и секций === */
+:root{
+  --calc-grand-bg: rgba(0,210,255,.12);     /* фон для ИТОГО (общий) */
+  --calc-grand-br: rgba(0,210,255,.38);
+  --calc-sub-bg:   rgba(0,210,255,.08);     /* фон для "Итого (Япония/Корея/Китай)" и "Итого (Россия)" */
+  --calc-sub-br:   rgba(0,210,255,.28);
+  --calc-sec-bg:   rgba(200,230,255,.08);   /* фон для "Расходы в ..." (чуть светлее с голубым оттенком) */
+  --calc-sec-br:   rgba(200,230,255,.20);
+}
+
+/* базовая строка результата */
+.calc-result .result-line{
+  display:flex;justify-content:space-between;gap:12px;
+  padding:8px 10px;border-bottom:1px dashed var(--border);
+}
+
+/* заголовки секций: "Расходы в Японии/Корее/Китае", "Расходы в России" */
+.calc-result .result-line.section{
+  background: var(--calc-sec-bg);
+  border: 1px solid var(--calc-sec-br);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 600;
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+
+/* подытоги: "Итого (Япония/Корея/Китай)" и "Итого (Россия)" */
+.calc-result .result-line.subtotal{
+  background: var(--calc-sub-bg);
+  border: 1px solid var(--calc-sub-br);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 700;
+}
+
+/* общий итог: "Итого цена в гор. Владивосток" — отдельная рамка, ярче */
+.calc-result .result-line.grand{
+  background: var(--calc-grand-bg);
+  border: 1px solid var(--calc-grand-br);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-weight: 800;
+  font-size: clamp(18px, 2.2vw, 20px);
+  color:#e6f9ff;
+  box-shadow:
+    0 0 0 1px rgba(0,210,255,.18) inset,
+    0 14px 36px rgba(0,210,255,.20);
+  margin-top: 8px;
+}
+
+/* чуть крупнее подписи сумм в правых колонках у подытогов/итога */
+.calc-result .result-line.subtotal .col,
+.calc-result .result-line.grand   .col{
+  font-size: 1.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* на узких экранах колонки не «ломаем» визуально */
+@media (max-width: 560px){
+  .calc-result .result-line{ gap:8px; }
+}
+
 
