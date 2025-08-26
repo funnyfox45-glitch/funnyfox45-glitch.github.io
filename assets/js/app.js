@@ -421,11 +421,10 @@ try {
     }
   }
 
-if (elCalcBtn) elCalcBtn.addEventListener('click', buildResult);
+  if (elCalcBtn) elCalcBtn.addEventListener('click', buildResult);
+}); // DOMContentLoaded
 
 } catch (e) {
   console.error('[app.js FATAL]', e);
 }
 })();
-
-
