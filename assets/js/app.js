@@ -1,94 +1,124 @@
-/* ===== WinAuto — фронтенд (с расчётом JP/KR/CN) ===== */
-document.addEventListener('DOMContentLoaded', () => {
-  /* --- стандартные хелперы/навигация/FAQ/модалки/анимации --- */
-  const y = document.getElementById('year'); if (y) y.textContent = new Date().getFullYear();
+/* ===== WinAuto — фронтенд (с расчётом JP/KR/CN) — совместимый ===== */
+document.addEventListener('DOMContentLoaded', function () {
+  // Год в подвале
+  var y = document.getElementById('year'); if (y) y.textContent = new Date().getFullYear();
 
-  const toggle = document.querySelector('.nav-toggle');
-  const mobile = document.getElementById('mobile-menu');
+  // Мобильное меню
+  var toggle = document.querySelector('.nav-toggle');
+  var mobile = document.getElementById('mobile-menu');
   if (toggle && mobile) {
-    toggle.addEventListener('click', () => {
-      const opened = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.addEventListener('click', function () {
+      var opened = toggle.getAttribute('aria-expanded') === 'true';
       toggle.setAttribute('aria-expanded', String(!opened));
       mobile.hidden = opened;
     });
   }
 
-  const tabs = document.querySelectorAll('.tab');
-  const panels = document.querySelectorAll('.tab-panels [role="tabpanel"]');
-  tabs.forEach(btn => btn.addEventListener('click', () => {
-    tabs.forEach(b => b.setAttribute('aria-selected','false'));
-    panels.forEach(p => p.hidden = true);
-    btn.setAttribute('aria-selected','true');
-    document.getElementById(btn.getAttribute('aria-controls')).hidden = false;
-  }));
+  // Табы
+  var tabs = document.querySelectorAll('.tab');
+  var panels = document.querySelectorAll('.tab-panels [role="tabpanel"]');
+  tabs.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      tabs.forEach(function (b) { b.setAttribute('aria-selected','false'); });
+      panels.forEach(function (p) { p.hidden = true; });
+      btn.setAttribute('aria-selected','true');
+      var pan = document.getElementById(btn.getAttribute('aria-controls'));
+      if (pan) pan.hidden = false;
+    });
+  });
 
-  document.querySelectorAll('.acc-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const open = btn.getAttribute('aria-expanded') === 'true';
+  // FAQ
+  Array.prototype.forEach.call(document.querySelectorAll('.acc-btn'), function (btn) {
+    btn.addEventListener('click', function () {
+      var open = btn.getAttribute('aria-expanded') === 'true';
       btn.setAttribute('aria-expanded', String(!open));
-      document.getElementById(btn.getAttribute('aria-controls')).hidden = open;
+      var panel = document.getElementById(btn.getAttribute('aria-controls'));
+      if (panel) panel.hidden = open;
     });
   });
 
-  document.querySelectorAll('[data-modal]').forEach(link => {
-    link.addEventListener('click', e => {
+  // Модалки
+  Array.prototype.forEach.call(document.querySelectorAll('[data-modal]'), function (link) {
+    link.addEventListener('click', function (e) {
       e.preventDefault();
-      document.getElementById(`modal-${link.dataset.modal}`)?.showModal();
+      var dlg = document.getElementById('modal-' + link.dataset.modal);
+      if (dlg && dlg.showModal) dlg.showModal();
     });
   });
-  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog')?.close()));
+  Array.prototype.forEach.call(document.querySelectorAll('[data-close]'), function (b) {
+    b.addEventListener('click', function () {
+      var d = b.closest('dialog');
+      if (d && d.close) d.close();
+    });
+  });
 
-  const io = new IntersectionObserver((entries)=>entries.forEach(e=>{
-    if (e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }
-  }), {threshold:.15});
-  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  // Анимации появления (фолбэк для старых браузеров)
+  var reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting){
+          e.target.classList.add('visible');
+          io.unobserve(e.target);
+        }
+      });
+    }, {threshold:0.15});
+    reveals.forEach(function(el){ io.observe(el); });
+  } else {
+    // если нет поддержки — просто показать
+    reveals.forEach(function(el){ el.classList.add('visible'); });
+  }
 
   /* ===== Курсы ЦБ РФ ===== */
-  const CBR_URL = 'https://www.cbr-xml-daily.ru/daily_json.js';
-  const FALLBACK = { USD: 90, EUR: 98, JPY: 0.55, CNY: 12.0, KRW: 0.07, RUB: 1 };
-  const state = { ratesRubPerUnit: { ...FALLBACK }, date: null };
+  var CBR_URL = 'https://www.cbr-xml-daily.ru/daily_json.js';
+  var FALLBACK = { USD: 90, EUR: 98, JPY: 0.55, CNY: 12.0, KRW: 0.07, RUB: 1 };
+  var state = { ratesRubPerUnit: Object.assign({}, FALLBACK), date: null };
 
-  const perOne = v => v.Value / v.Nominal;
-  const to2 = n => Number(n).toFixed(2).replace('.', ',');
-  const fmtInt = n => Number(n).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  const addCur = (n, cur) => n === '' ? '—' : `${fmtInt(n)} ${cur}`;
-  const convert = (amount, from, to) => {
+  function perOne(v){ return v.Value / v.Nominal; }
+  function to2(n){ return Number(n).toFixed(2).replace('.', ','); }
+  function fmtInt(n){ return Number(n).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  function addCur(n, cur){ return n === '' ? '—' : (fmtInt(n) + ' ' + cur); }
+  function convert(amount, from, to){
     if (from === to) return amount;
-    const rFrom = state.ratesRubPerUnit[from], rTo = state.ratesRubPerUnit[to];
+    var rFrom = state.ratesRubPerUnit[from];
+    var rTo   = state.ratesRubPerUnit[to];
     if (!rFrom || !rTo) return NaN;
     return amount * rFrom / rTo; // через RUB
-  };
+  }
 
-  async function fetchWithTimeout(url, ms=8000){
-    return await Promise.race([
+  function fetchWithTimeout(url, ms){
+    if (ms === void 0) ms = 8000;
+    return Promise.race([
       fetch(url, {cache:'no-store'}),
-      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), ms))
+      new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('timeout')); }, ms); })
     ]);
   }
 
-  async function loadCbrSafe(){
-    try {
-      const cached = localStorage.getItem('CBR_DAILY_JSON');
-      if (cached){
-        const obj = JSON.parse(cached);
-        const today = new Date().toISOString().slice(0,10);
-        if (obj?.Date?.slice(0,10) === today){ applyRates(obj); return; }
+  function loadCbrSafe(){
+    (async function(){
+      try {
+        var cached = localStorage.getItem('CBR_DAILY_JSON');
+        if (cached){
+          var obj = JSON.parse(cached);
+          var today = new Date().toISOString().slice(0,10);
+          if (obj && obj.Date && obj.Date.slice(0,10) === today){ applyRates(obj); return; }
+        }
+        var res = await fetchWithTimeout(CBR_URL);
+        var data = await res.json();
+        try{ localStorage.setItem('CBR_DAILY_JSON', JSON.stringify(data)); }catch(_){}
+        applyRates(data);
+      } catch (e) {
+        console.warn('CBR load failed, using fallback', e);
+        state.date = new Date().toLocaleDateString('ru-RU');
+        paintInline();
       }
-      const res = await fetchWithTimeout(CBR_URL);
-      const data = await res.json();
-      try{ localStorage.setItem('CBR_DAILY_JSON', JSON.stringify(data)); }catch(_){}
-      applyRates(data);
-    } catch (e) {
-      console.warn('CBR load failed, using fallback', e);
-      state.date = new Date().toLocaleDateString('ru-RU');
-      paintInline();
-    }
+    })();
   }
 
   function applyRates(data){
     state.date = new Date(data.Date).toLocaleDateString('ru-RU');
-    ['USD','EUR','JPY','CNY','KRW'].forEach(code=>{
-      const v = data.Valute?.[code];
+    ['USD','EUR','JPY','CNY','KRW'].forEach(function(code){
+      var v = data && data.Valute ? data.Valute[code] : null;
       if (v) state.ratesRubPerUnit[code] = perOne(v);
     });
     state.ratesRubPerUnit.RUB = 1;
@@ -96,69 +126,67 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function paintInline(){
-    const title = document.getElementById('rates-title');
-    const line  = document.getElementById('rates-inline');
+    var title = document.getElementById('rates-title');
+    var line  = document.getElementById('rates-inline');
     if (title) title.textContent = 'Курсы ЦБ РФ на ' + state.date;
     if (line){
-      const order = ['JPY','KRW','CNY','USD','EUR'];
-      line.textContent = order.map(c=>`${c} ${to2(state.ratesRubPerUnit[c])} Р`).join(' • ');
+      var order = ['JPY','KRW','CNY','USD','EUR'];
+      line.textContent = order.map(function(c){ return c + ' ' + to2(state.ratesRubPerUnit[c]) + ' Р'; }).join(' • ');
     }
-    const rateInput = document.getElementById('rate');
-    const note = document.getElementById('rate-note');
+    var rateInput = document.getElementById('rate');
+    var note = document.getElementById('rate-note');
     if (rateInput && state.ratesRubPerUnit.USD){
       rateInput.value = Number(state.ratesRubPerUnit.USD).toFixed(2);
-      if (note) note.textContent = `Курс ЦБ на ${state.date} (1 USD = ${to2(state.ratesRubPerUnit.USD)} Р)`;
+      if (note) note.textContent = 'Курс ЦБ на ' + state.date + ' (1 USD = ' + to2(state.ratesRubPerUnit.USD) + ' Р)';
     }
   }
   loadCbrSafe();
 
   /* ===== Калькулятор ===== */
-  const elCountry   = document.getElementById('country');
-  const elAge       = document.getElementById('car-age');
-  const elPrice     = document.getElementById('price');
-  const elPriceCur  = document.getElementById('price-cur');  // JPY/KRW/CNY
-  const elEngineCc  = document.getElementById('engine-cc');
-  const elEngineL   = document.getElementById('engine');
-  const elCalcBtn   = document.getElementById('calc-btn');
-  const elResult    = document.getElementById('calc-result');
+  var elCountry  = document.getElementById('country');
+  var elAge      = document.getElementById('car-age');
+  var elPrice    = document.getElementById('price');
+  var elPriceCur = document.getElementById('price-cur');  // JPY/KRW/CNY
+  var elEngineCc = document.getElementById('engine-cc');
+  var elEngineL  = document.getElementById('engine');
+  var elCalcBtn  = document.getElementById('calc-btn');
+  var elResult   = document.getElementById('calc-result');
 
-  /* --- санкционный фрахт (только Япония) в USD --- */
   function sanctionUSD(priceJPY){
-    if (priceJPY <= 999_999)   return 2600;
-    if (priceJPY <= 1_999_999) return 3000;
-    if (priceJPY <= 2_999_999) return 3200;
-    if (priceJPY <= 3_999_999) return 3400;
-    if (priceJPY <= 9_999_999) return 3600;
+    if (priceJPY <= 999999)   return 2600;
+    if (priceJPY <= 1999999)  return 3000;
+    if (priceJPY <= 2999999)  return 3200;
+    if (priceJPY <= 3999999)  return 3400;
+    if (priceJPY <= 9999999)  return 3600;
     return priceJPY * 0.00003 + 3000;
   }
 
-  /* --- Пошлина (руб) по вашей формуле, цена в произвольной валюте --- */
   function customsDutyRub(ageCat, engineCc, price, priceCur){
-    const rubPerEUR = state.ratesRubPerUnit.EUR;
-    const rubPerFrom = state.ratesRubPerUnit[priceCur];
+    var rubPerEUR = state.ratesRubPerUnit.EUR;
+    var rubPerFrom = state.ratesRubPerUnit[priceCur];
     if (!rubPerEUR || !rubPerFrom) return 0;
 
-    const eurPrice = price * (rubPerFrom / rubPerEUR); // цена авто в EUR
-    const e = engineCc;
-    let dutyEUR = 0;
+    var eurPrice = price * (rubPerFrom / rubPerEUR); // цена авто в EUR
+    var e = engineCc;
+    var dutyEUR = 0;
 
-    if (ageCat === '5plus'){ // старше 5
+    if (ageCat === '5plus'){
       if (e <= 1000) dutyEUR = 3.0*e;
       else if (e <= 1500) dutyEUR = 3.2*e;
       else if (e <= 1800) dutyEUR = 3.5*e;
       else if (e <= 2300) dutyEUR = 4.8*e;
       else if (e <= 3000) dutyEUR = 5.0*e;
       else dutyEUR = 5.7*e;
-    } else if (ageCat === '3-5'){ // 3–5
+    } else if (ageCat === '3-5'){
       if (e <= 1000) dutyEUR = 1.5*e;
       else if (e <= 1500) dutyEUR = 1.7*e;
       else if (e <= 1800) dutyEUR = 2.5*e;
       else if (e <= 2300) dutyEUR = 2.7*e;
       else if (e <= 3000) dutyEUR = 3.0*e;
       else dutyEUR = 3.6*e;
-    } else { // до 3 лет
-      const ceil = p => eurPrice * p;
-      const byCc = coef => e * coef;
+    } else { // '0-3'
+      var ceil = function(p){ return eurPrice * p; };
+      var byCc = function(coef){ return e * coef; };
       if (eurPrice <= 8500)          dutyEUR = Math.max(ceil(0.54), byCc(2.5));
       else if (eurPrice <= 16700)    dutyEUR = Math.max(ceil(0.48), byCc(3.5));
       else if (eurPrice <= 42300)    dutyEUR = Math.max(ceil(0.48), byCc(5.5));
@@ -169,9 +197,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return dutyEUR * rubPerEUR; // в рублях
   }
 
-  /* --- Утилизационный сбор (руб) --- */
   function utilRub(ageCat, engineCc){
-    let coef = 0.17;
+    var coef = 0.17;
     if (ageCat === '0-3'){
       if (engineCc <= 3000) coef = 0.17;
       else if (engineCc <= 3500) coef = 107.67;
@@ -188,170 +215,179 @@ document.addEventListener('DOMContentLoaded', () => {
     return 20000 * coef;
   }
 
-  /* --- генераторы строк/таблиц --- */
-  const row = (title, a='', b='', c='') =>
-    `<tr><th scope="row">${title}</th><td>${a || '—'}</td><td>${b || '—'}</td><td>${c || '—'}</td></tr>`;
+  function fmtAmountCells(sum, cur){
+    return [
+      addCur(sum, cur),
+      addCur(convert(sum, cur, 'USD'), 'USD'),
+      addCur(convert(sum, cur, 'RUB'), '₽')
+    ];
+  }
 
-  const amountCells = (sum, cur) => [
-    addCur(sum, cur),
-    addCur(convert(sum, cur, 'USD'), 'USD'),
-    addCur(convert(sum, cur, 'RUB'), '₽'),
-  ];
+  function row(title, a, b, c){
+    return '<tr><th scope="row">' + title + '</th><td>' + (a || '—') + '</td><td>' + (b || '—') + '</td><td>' + (c || '—') + '</td></tr>';
+    }
 
-  /* ====== Страны ====== */
+  function renderJP(args){
+    var priceJPY = args.priceJPY, ageCat = args.ageCat, engineCc = args.engineCc;
+    var cur = 'JPY';
+    var inside = 140000;
+    var freight = 70000;
+    var insure  = 50000;
+    var sancUSD = engineCc > 1800 ? sanctionUSD(priceJPY) : 0;
+    var sancJPY = sancUSD ? convert(sancUSD,'USD','JPY') : 0;
+    var sumCountry = priceJPY + inside + freight + insure + sancJPY;
 
-  // Япония (без изменений по структуре)
-  function renderJP({ priceJPY, ageCat, engineCc }){
-    const cur = 'JPY';
-    const inside = 140000;
-    const freight = 70000;
-    const insure  = 50000;
-    const sancUSD = engineCc > 1800 ? sanctionUSD(priceJPY) : 0;
-    const sancJPY = sancUSD ? convert(sancUSD,'USD','JPY') : 0;
+    var dutyR = customsDutyRub(ageCat, engineCc, priceJPY, 'JPY');
+    var utilR = utilRub(ageCat, engineCc);
+    var svh = 75000, lab=5000, fee=50000;
+    var sumRU = dutyR + utilR + svh + lab + fee;
+    var totalRub = convert(sumCountry,'JPY','RUB') + sumRU;
 
-    const sumCountry = priceJPY + inside + freight + insure + sancJPY;
+    var html = ''
+      + '<div class="result-total" style="margin-bottom:8px">'
+      + '<strong>ИТОГО ЦЕНА В ГОР. Владивосток</strong> — <span style="color:var(--primary)">' + fmtInt(totalRub) + ' ₽</span>'
+      + '</div>'
+      + '<div class="table-wrap"><table class="table-compare">'
+      + '<thead><tr><th>Статья</th><th>JPY</th><th>USD</th><th>RUB</th></tr></thead>'
+      + '<tbody>'
+      + '<tr><th colspan="4">Расходы в Японии</th></tr>'
+      + row('Аукционная стоимость',            fmtAmountCells(priceJPY,cur)[0], fmtAmountCells(priceJPY,cur)[1], fmtAmountCells(priceJPY,cur)[2])
+      + row('Доставка внутри Японии, аукционный сбор, агент', fmtAmountCells(inside,cur)[0], fmtAmountCells(inside,cur)[1], fmtAmountCells(inside,cur)[2])
+      + row('Фрахт до Владивостока',          fmtAmountCells(freight,cur)[0], fmtAmountCells(freight,cur)[1], fmtAmountCells(freight,cur)[2])
+      + row('Гарантия от повреждений',        fmtAmountCells(insure,cur)[0], fmtAmountCells(insure,cur)[1], fmtAmountCells(insure,cur)[2])
+      + (sancJPY ? row('Доставка санкционного авто', fmtAmountCells(sancJPY,cur)[0], fmtAmountCells(sancJPY,cur)[1], fmtAmountCells(sancJPY,cur)[2]) : '')
+      + row('<strong>Итого (Япония)</strong>', fmtAmountCells(sumCountry,cur)[0], fmtAmountCells(sumCountry,cur)[1], fmtAmountCells(sumCountry,cur)[2])
 
-    const dutyR = customsDutyRub(ageCat, engineCc, priceJPY, 'JPY');
-    const utilR = utilRub(ageCat, engineCc);
-    const svh = 75000, lab=5000, fee=50000;
-    const sumRU = dutyR + utilR + svh + lab + fee;
-    const totalRub = convert(sumCountry,'JPY','RUB') + sumRU;
-
-    let html = `
-      <div class="result-total" style="margin-bottom:8px">
-        <strong>ИТОГО ЦЕНА В ГОР. Владивосток</strong> — <span style="color:var(--primary)">${fmtInt(totalRub)} ₽</span>
-      </div>
-      <div class="table-wrap"><table class="table-compare">
-        <thead><tr><th>Статья</th><th>JPY</th><th>USD</th><th>RUB</th></tr></thead>
-        <tbody>
-          <tr><th colspan="4">Расходы в Японии</th></tr>
-          ${row('Аукционная стоимость', ...amountCells(priceJPY,cur))}
-          ${row('Доставка внутри Японии, аукционный сбор, агент', ...amountCells(inside,cur))}
-          ${row('Фрахт до Владивостока', ...amountCells(freight,cur))}
-          ${row('Гарантия от повреждений', ...amountCells(insure,cur))}
-          ${sancUSD ? row('Доставка санкционного авто', ...amountCells(sancJPY,cur)) : ''}
-          ${row('<strong>Итого (Япония)</strong>', ...amountCells(sumCountry,cur))}
-
-          <tr><th colspan="4">Расходы в России</th></tr>
-          ${row('Таможенная пошлина', '', addCur(convert(dutyR,'RUB','USD'),'USD'), addCur(dutyR,'₽'))}
-          ${row('Утилизационный сбор', '', addCur(convert(utilR,'RUB','USD'),'USD'), addCur(utilR,'₽'))}
-          ${row('СВХ/оформление/СБКТС/доставка', '', addCur(convert(svh,'RUB','USD'),'USD'), addCur(svh,'₽'))}
-          ${row('Лаборатория', '', addCur(convert(lab,'RUB','USD'),'USD'), addCur(lab,'₽'))}
-          ${row('Комиссия WinAuto', '', addCur(convert(fee,'RUB','USD'),'USD'), addCur(fee,'₽'))}
-          ${row('<strong>Итого (Россия)</strong>', '', addCur(convert(sumRU,'RUB','USD'),'USD'), addCur(sumRU,'₽'))}
-        </tbody></table></div>`;
+      + '<tr><th colspan="4">Расходы в России</th></tr>'
+      + row('Таможенная пошлина', '', addCur(convert(dutyR,'RUB','USD'),'USD'), addCur(dutyR,'₽'))
+      + row('Утилизационный сбор','', addCur(convert(utilR,'RUB','USD'),'USD'), addCur(utilR,'₽'))
+      + row('СВХ/оформление/СБКТС/доставка','', addCur(convert(svh,'RUB','USD'),'USD'), addCur(svh,'₽'))
+      + row('Лаборатория','', addCur(convert(lab,'RUB','USD'),'USD'), addCur(lab,'₽'))
+      + row('Комиссия WinAuto','', addCur(convert(fee,'RUB','USD'),'USD'), addCur(fee,'₽'))
+      + row('<strong>Итого (Россия)</strong>', '', addCur(convert(sumRU,'RUB','USD'),'USD'), addCur(sumRU,'₽'))
+      + '</tbody></table></div>';
     return html;
   }
 
-  // Общий рендер для KR и CN
-  function renderGenericCountry({ country, cur, labels, price, ageCat, engineCc, inside, freight, insure }){
-    const sumCountry = price + inside + (freight||0) + insure;
+  function renderGenericCountry(cfg){
+    var cur = cfg.cur;
+    var price = cfg.price;
+    var ageCat = cfg.ageCat;
+    var engineCc = cfg.engineCc;
+    var inside = cfg.inside;
+    var freight = cfg.freight || 0;
+    var insure = cfg.insure;
 
-    const dutyR = customsDutyRub(ageCat, engineCc, price, cur);
-    const utilR = utilRub(ageCat, engineCc);
-    const svh = 100000, lab = 5000, fee = 50000; // как вы просили
-    const sumRU = dutyR + utilR + svh + lab + fee;
+    var sumCountry = price + inside + freight + insure;
 
-    const totalRub = convert(sumCountry, cur, 'RUB') + sumRU;
+    var dutyR = customsDutyRub(ageCat, engineCc, price, cur);
+    var utilR = utilRub(ageCat, engineCc);
+    var svh = 100000, lab = 5000, fee = 50000;
+    var sumRU = dutyR + utilR + svh + lab + fee;
 
-    let html = `
-      <div class="result-total" style="margin-bottom:8px">
-        <strong>ИТОГО ЦЕНА В ГОР. Владивосток</strong> — <span style="color:var(--primary)">${fmtInt(totalRub)} ₽</span>
-      </div>
-      <div class="table-wrap"><table class="table-compare">
-        <thead><tr><th>Статья</th><th>${cur}</th><th>USD</th><th>RUB</th></tr></thead>
-        <tbody>
-          <tr><th colspan="4">${labels.countryBlock}</th></tr>
-          ${row(labels.priceRow, ...amountCells(price,cur))}
-          ${row(labels.insideRow, ...amountCells(inside,cur))}
-          ${freight ? row(labels.freightRow, ...amountCells(freight,cur)) : ''}
-          ${row(labels.damageRow, ...amountCells(insure,cur))}
-          ${row('<strong>Итого ('+labels.countryShort+')</strong>', ...amountCells(sumCountry,cur))}
+    var totalRub = convert(sumCountry, cur, 'RUB') + sumRU;
 
-          <tr><th colspan="4">Расходы в России</th></tr>
-          ${row('Таможенная пошлина', '', addCur(convert(dutyR,'RUB','USD'),'USD'), addCur(dutyR,'₽'))}
-          ${row('Утилизационный сбор', '', addCur(convert(utilR,'RUB','USD'),'USD'), addCur(utilR,'₽'))}
-          ${row('Выгрузка/СВХ/оформление/СБКТС/доставка', '', addCur(convert(svh,'RUB','USD'),'USD'), addCur(svh,'₽'))}
-          ${row('Расходы лаборатории', '', addCur(convert(lab,'RUB','USD'),'USD'), addCur(lab,'₽'))}
-          ${row('Комиссия WinAuto', '', addCur(convert(fee,'RUB','USD'),'USD'), addCur(fee,'₽'))}
-          ${row('<strong>Итого (Россия)</strong>', '', addCur(convert(sumRU,'RUB','USD'),'USD'), addCur(sumRU,'₽'))}
-        </tbody></table></div>`;
+    var cellsPrice   = fmtAmountCells(price,cur);
+    var cellsInside  = fmtAmountCells(inside,cur);
+    var cellsInsure  = fmtAmountCells(insure,cur);
+    var cellsFreight = freight ? fmtAmountCells(freight,cur) : null;
+    var cellsSumCtry = fmtAmountCells(sumCountry,cur);
+
+    var html = ''
+      + '<div class="result-total" style="margin-bottom:8px">'
+      + '<strong>ИТОГО ЦЕНА В ГОР. Владивосток</strong> — <span style="color:var(--primary)">' + fmtInt(totalRub) + ' ₽</span>'
+      + '</div>'
+      + '<div class="table-wrap"><table class="table-compare">'
+      + '<thead><tr><th>Статья</th><th>' + cur + '</th><th>USD</th><th>RUB</th></tr></thead>'
+      + '<tbody>'
+      + '<tr><th colspan="4">' + cfg.labels.countryBlock + '</th></tr>'
+      + row(cfg.labels.priceRow,  cellsPrice[0],  cellsPrice[1],  cellsPrice[2])
+      + row(cfg.labels.insideRow, cellsInside[0], cellsInside[1], cellsInside[2])
+      + (cellsFreight ? row(cfg.labels.freightRow, cellsFreight[0], cellsFreight[1], cellsFreight[2]) : '')
+      + row(cfg.labels.damageRow, cellsInsure[0], cellsInsure[1], cellsInsure[2])
+      + row('<strong>Итого (' + cfg.labels.countryShort + ')</strong>', cellsSumCtry[0], cellsSumCtry[1], cellsSumCtry[2])
+
+      + '<tr><th colspan="4">Расходы в России</th></tr>'
+      + row('Таможенная пошлина', '', addCur(convert(dutyR,'RUB','USD'),'USD'), addCur(dutyR,'₽'))
+      + row('Утилизационный сбор','', addCur(convert(utilR,'RUB','USD'),'USD'), addCur(utilR,'₽'))
+      + row('Выгрузка/СВХ/оформление/СБКТС/доставка','', addCur(convert(svh,'RUB','USD'),'USD'), addCur(svh,'₽'))
+      + row('Расходы лаборатории','', addCur(convert(lab,'RUB','USD'),'USD'), addCur(lab,'₽'))
+      + row('Комиссия WinAuto','', addCur(convert(fee,'RUB','USD'),'USD'), addCur(fee,'₽'))
+      + row('<strong>Итого (Россия)</strong>', '', addCur(convert(sumRU,'RUB','USD'),'USD'), addCur(sumRU,'₽'))
+      + '</tbody></table></div>';
+
     return html;
   }
 
-  function renderKR({ priceKRW, ageCat, engineCc }){
+  function renderKR(args){
     return renderGenericCountry({
-      country: 'KR',
       cur: 'KRW',
       labels: {
         countryBlock: 'Расходы в Корее',
         countryShort: 'Корея',
-        priceRow: 'Стоимость авто в Корее',
+        priceRow:  'Стоимость авто в Корее',
         insideRow: 'Расходы по доставке внутри Кореи, дилерская комиссия',
-        freightRow: 'Фрахт до Владивостока',
-        damageRow: 'Гарантия от повреждений авто',
+        freightRow:'Фрахт до Владивостока',
+        damageRow: 'Гарантия от повреждений авто'
       },
-      price: priceKRW,
-      ageCat, engineCc,
-      inside: 1_500_000,
-      freight: 1_000_000,
-      insure: 150_000
+      price: args.priceKRW,
+      ageCat: args.ageCat,
+      engineCc: args.engineCc,
+      inside: 1500000,
+      freight: 1000000,
+      insure: 150000
     });
   }
 
-  function renderCN({ priceCNY, ageCat, engineCc }){
+  function renderCN(args){
     return renderGenericCountry({
-      country: 'CN',
       cur: 'CNY',
       labels: {
         countryBlock: 'Расходы в Китае',
         countryShort: 'Китай',
-        priceRow: 'Стоимость авто в Китае',
+        priceRow:  'Стоимость авто в Китае',
         insideRow: 'Расходы по доставке внутри Китая',
-        // по ТЗ фрахт отсутствует
-        damageRow: 'Гарантия от повреждений авто',
+        damageRow: 'Гарантия от повреждений авто'
       },
-      price: priceCNY,
-      ageCat, engineCc,
-      inside: 20_000,
-      freight: 0,             // нет фрахта
-      insure: 5_000
+      price: args.priceCNY,
+      ageCat: args.ageCat,
+      engineCc: args.engineCc,
+      inside: 20000,
+      freight: 0,
+      insure: 5000
     });
   }
 
-  /* === сводка/рендер по кнопке === */
   function buildResult(){
     if (!elResult) return;
 
-    const country = (elCountry?.value || 'JP');   // JP / KR / CN
-    const ageCat  = (elAge?.value || '3-5');
+    var country = (elCountry && elCountry.value) ? elCountry.value : 'JP'; // JP/KR/CN
+    var ageCat  = (elAge && elAge.value) ? elAge.value : '3-5';
 
-    let engineCc = 0;
+    var engineCc = 0;
     if (elEngineCc) engineCc = Number(elEngineCc.value || 0);
     else if (elEngineL) engineCc = Math.round(Number(elEngineL.value || 0) * 1000);
 
-    const priceVal = Number(elPrice?.value || 0);
-    const cur = elPriceCur?.value || 'JPY';
+    var priceVal = Number((elPrice && elPrice.value) || 0);
+    var cur = (elPriceCur && elPriceCur.value) ? elPriceCur.value : 'JPY';
 
     if (!priceVal || !engineCc){
-      elResult.innerHTML = `<p class="muted">Введите цену и объём двигателя для расчёта.</p>`;
+      elResult.innerHTML = '<p class="muted">Введите цену и объём двигателя для расчёта.</p>';
       return;
     }
 
     if (country === 'JP'){
-      const priceJPY = convert(priceVal, cur, 'JPY');
-      elResult.innerHTML = renderJP({ priceJPY, ageCat, engineCc });
+      var priceJPY = convert(priceVal, cur, 'JPY');
+      elResult.innerHTML = renderJP({ priceJPY: priceJPY, ageCat: ageCat, engineCc: engineCc });
     } else if (country === 'KR'){
-      const priceKRW = convert(priceVal, cur, 'KRW');
-      elResult.innerHTML = renderKR({ priceKRW, ageCat, engineCc });
+      var priceKRW = convert(priceVal, cur, 'KRW');
+      elResult.innerHTML = renderKR({ priceKRW: priceKRW, ageCat: ageCat, engineCc: engineCc });
     } else if (country === 'CN'){
-      const priceCNY = convert(priceVal, cur, 'CNY');
-      elResult.innerHTML = renderCN({ priceCNY, ageCat, engineCc });
+      var priceCNY = convert(priceVal, cur, 'CNY');
+      elResult.innerHTML = renderCN({ priceCNY: priceCNY, ageCat: ageCat, engineCc: engineCc });
     }
   }
 
-  elCalcBtn?.addEventListener('click', buildResult);
-});
-
+  if (elCalcBtn) elCalcBtn.addEventListener('click', buildResult);
 });
 
