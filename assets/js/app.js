@@ -52,21 +52,30 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Анимации появления
+  /* ===== Анимации появления ===== */
+try {
   var reveals = document.querySelectorAll('.reveal');
   if ('IntersectionObserver' in window) {
-    var io = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){
-        if (e.isIntersecting){
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
           e.target.classList.add('visible');
           io.unobserve(e.target);
         }
       });
-    }, {threshold:0.15});
-    reveals.forEach(function(el){ io.observe(el); });
+    }, { threshold: 0.15 });
+    reveals.forEach(function (el) { io.observe(el); });
   } else {
-    reveals.forEach(function(el){ el.classList.add('visible'); });
+    // нет IO — просто показываем
+    reveals.forEach(function (el) { el.classList.add('visible'); });
   }
+} catch (e) {
+  // если где-то выше в коде что-то упало — всё равно показываем элементы
+  console.warn('reveal fallback due to error:', e);
+  document.querySelectorAll('.reveal').forEach(function (el) {
+    el.classList.add('visible');
+  });
+}
 
   /* ===== Курсы ЦБ РФ ===== */
   var CBR_URL = 'https://www.cbr-xml-daily.ru/daily_json.js';
