@@ -1,6 +1,6 @@
-/* ===== WinAuto — фронтенд (с расчётом JP/KR/CN) — совместимый ===== */
+/* ===== WinAuto — фронтенд (с расчётом JP/KR/CN) — визуальные правки итогов ===== */
 document.addEventListener('DOMContentLoaded', function () {
-  // Год в подвале
+  // Год
   var y = document.getElementById('year'); if (y) y.textContent = new Date().getFullYear();
 
   // Мобильное меню
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Анимации появления (фолбэк для старых браузеров)
+  // Анимации появления
   var reveals = document.querySelectorAll('.reveal');
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function(entries){
@@ -65,7 +65,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }, {threshold:0.15});
     reveals.forEach(function(el){ io.observe(el); });
   } else {
-    // если нет поддержки — просто показать
     reveals.forEach(function(el){ el.classList.add('visible'); });
   }
 
@@ -162,13 +161,13 @@ document.addEventListener('DOMContentLoaded', function () {
     return priceJPY * 0.00003 + 3000;
   }
 
-  // растаможка (руб) — по вашей формуле
+  // растаможка (руб)
   function customsDutyRub(ageCat, engineCc, price, priceCur){
     var rubPerEUR = state.ratesRubPerUnit.EUR;
     var rubPerFrom = state.ratesRubPerUnit[priceCur];
     if (!rubPerEUR || !rubPerFrom) return 0;
 
-    var eurPrice = price * (rubPerFrom / rubPerEUR); // цена авто в EUR
+    var eurPrice = price * (rubPerFrom / rubPerEUR);
     var e = engineCc;
     var dutyEUR = 0;
 
@@ -196,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function () {
       else if (eurPrice <= 169000)   dutyEUR = Math.max(ceil(0.48), byCc(15));
       else                           dutyEUR = Math.max(ceil(0.48), byCc(20));
     }
-    return dutyEUR * rubPerEUR; // в рублях
+    return dutyEUR * rubPerEUR;
   }
 
   // утиль (руб)
@@ -218,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return 20000 * coef;
   }
 
-  // формат ячеек сумм
+  // формат сумм (три колонки)
   function fmtAmountCells(sum, cur){
     return [
       addCur(sum, cur),
@@ -227,16 +226,27 @@ document.addEventListener('DOMContentLoaded', function () {
     ];
   }
 
-  function row(title, a, b, c, extraThAttrs){
-    var thAttrs = extraThAttrs || '';
-    return '<tr><th scope="row" ' + thAttrs + '>' + title + '</th><td>' + (a || '—') + '</td><td>' + (b || '—') + '</td><td>' + (c || '—') + '</td></tr>';
+  // универсальный вывод строки
+  function row(title, a, b, c, trStyle, thStyle){
+    return '<tr ' + (trStyle||'') + '>'
+      + '<th scope="row" ' + (thStyle||'') + '>' + title + '</th>'
+      + '<td>' + (a || '—') + '</td>'
+      + '<td>' + (b || '—') + '</td>'
+      + '<td>' + (c || '—') + '</td>'
+      + '</tr>';
   }
 
-  // --- Стили для блоков результата (inline, чтобы не править CSS сейчас) ---
-  var STYLE_SECTION = 'style="background:rgba(255,255,255,.06);color:#e6f1ff;font-weight:600;border-bottom:1px solid var(--border);"';
-  var STYLE_TOTAL_ROW = 'style="background:rgba(0,210,255,.08);border-top:1px solid rgba(0,210,255,.25);border-bottom:1px solid rgba(0,210,255,.25);"';
+  // --- Инлайн-стили для результата ---
+  // Раздел «ИТОГО ЦЕНА …»
   var STYLE_GRAND = 'style="margin:10px 0 14px;padding:12px 14px;border-radius:14px;border:1px solid rgba(0,210,255,.35);background:rgba(0,210,255,.10);box-shadow:0 8px 24px rgba(0,210,255,.15) inset, 0 10px 30px rgba(0,210,255,.10);"';
   var STYLE_GRAND_TEXT = 'style="color:var(--primary);font-weight:700;letter-spacing:.2px"';
+
+  // Строка-разделитель «Расходы в …»
+  var STYLE_SECTION_TR = 'style="background:rgba(255,255,255,.075);color:#fff;border-bottom:1px solid rgba(255,255,255,.28);"';
+
+  // «Итого (страна)» и «Итого (Россия)» — вся строка
+  var STYLE_TOTAL_TR = 'style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.30);"';
+  var STYLE_TOTAL_TH = 'style="font-weight:800;text-decoration:underline;font-size:16px"';
 
   function renderJP(args){
     var priceJPY = args.priceJPY, ageCat = args.ageCat, engineCc = args.engineCc;
@@ -256,28 +266,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var html = ''
       + '<div class="result-grand" ' + STYLE_GRAND + '>'
-      + '<div><strong>ИТОГО ЦЕНА В ГОР. Владивосток</strong> — '
-      + '<span ' + STYLE_GRAND_TEXT + '>' + fmtInt(totalRub) + ' ₽</span></div>'
+      + '<div><span ' + STYLE_GRAND_TEXT + '>ИТОГО ЦЕНА В ГОР. Владивосток — ' + fmtInt(totalRub) + ' ₽</span></div>'
       + '</div>'
 
       + '<div class="table-wrap"><table class="table-compare">'
       + '<thead><tr><th>Статья</th><th>JPY</th><th>USD</th><th>RUB</th></tr></thead>'
       + '<tbody>'
-      + '<tr><th colspan="4" ' + STYLE_SECTION + '>Расходы в Японии</th></tr>'
+      + '<tr ' + STYLE_SECTION_TR + '><th colspan="4">Расходы в Японии</th></tr>'
       + row('Аукционная стоимость',            fmtAmountCells(priceJPY,cur)[0], fmtAmountCells(priceJPY,cur)[1], fmtAmountCells(priceJPY,cur)[2])
       + row('Доставка внутри Японии, аукционный сбор, агент', fmtAmountCells(inside,cur)[0], fmtAmountCells(inside,cur)[1], fmtAmountCells(inside,cur)[2])
       + row('Фрахт до Владивостока',          fmtAmountCells(freight,cur)[0], fmtAmountCells(freight,cur)[1], fmtAmountCells(freight,cur)[2])
       + row('Гарантия от повреждений',        fmtAmountCells(insure,cur)[0], fmtAmountCells(insure,cur)[1], fmtAmountCells(insure,cur)[2])
       + (sancJPY ? row('Доставка санкционного авто', fmtAmountCells(sancJPY,cur)[0], fmtAmountCells(sancJPY,cur)[1], fmtAmountCells(sancJPY,cur)[2]) : '')
-      + row('<strong>Итого (Япония)</strong>', fmtAmountCells(sumCountry,cur)[0], fmtAmountCells(sumCountry,cur)[1], fmtAmountCells(sumCountry,cur)[2], STYLE_TOTAL_ROW)
+      + row('Итого (Япония)', fmtAmountCells(sumCountry,cur)[0], fmtAmountCells(sumCountry,cur)[1], fmtAmountCells(sumCountry,cur)[2], STYLE_TOTAL_TR, STYLE_TOTAL_TH)
 
-      + '<tr><th colspan="4" ' + STYLE_SECTION + '>Расходы в России</th></tr>'
+      + '<tr ' + STYLE_SECTION_TR + '><th colspan="4">Расходы в России</th></tr>'
       + row('Таможенная пошлина', '', addCur(convert(dutyR,'RUB','USD'),'USD'), addCur(dutyR,'₽'))
       + row('Утилизационный сбор','', addCur(convert(utilR,'RUB','USD'),'USD'), addCur(utilR,'₽'))
       + row('СВХ/оформление/СБКТС/доставка','', addCur(convert(svh,'RUB','USD'),'USD'), addCur(svh,'₽'))
       + row('Лаборатория','', addCur(convert(lab,'RUB','USD'),'USD'), addCur(lab,'₽'))
       + row('Комиссия WinAuto','', addCur(convert(fee,'RUB','USD'),'USD'), addCur(fee,'₽'))
-      + row('<strong>Итого (Россия)</strong>', '', addCur(convert(sumRU,'RUB','USD'),'USD'), addCur(sumRU,'₽'), STYLE_TOTAL_ROW)
+      + row('Итого (Россия)', '', addCur(convert(sumRU,'RUB','USD'),'USD'), addCur(sumRU,'₽'), STYLE_TOTAL_TR, STYLE_TOTAL_TH)
       + '</tbody></table></div>';
     return html;
   }
@@ -308,27 +317,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var html = ''
       + '<div class="result-grand" ' + STYLE_GRAND + '>'
-      + '<div><strong>ИТОГО ЦЕНА В ГОР. Владивосток</strong> — '
-      + '<span ' + STYLE_GRAND_TEXT + '>' + fmtInt(totalRub) + ' ₽</span></div>'
+      + '<div><span ' + STYLE_GRAND_TEXT + '>ИТОГО ЦЕНА В ГОР. Владивосток — ' + fmtInt(totalRub) + ' ₽</span></div>'
       + '</div>'
 
       + '<div class="table-wrap"><table class="table-compare">'
       + '<thead><tr><th>Статья</th><th>' + cur + '</th><th>USD</th><th>RUB</th></tr></thead>'
       + '<tbody>'
-      + '<tr><th colspan="4" ' + STYLE_SECTION + '>' + cfg.labels.countryBlock + '</th></tr>'
+      + '<tr ' + STYLE_SECTION_TR + '><th colspan="4">' + cfg.labels.countryBlock + '</th></tr>'
       + row(cfg.labels.priceRow,  cellsPrice[0],  cellsPrice[1],  cellsPrice[2])
       + row(cfg.labels.insideRow, cellsInside[0], cellsInside[1], cellsInside[2])
       + (cellsFreight ? row(cfg.labels.freightRow, cellsFreight[0], cellsFreight[1], cellsFreight[2]) : '')
       + row(cfg.labels.damageRow, cellsInsure[0], cellsInsure[1], cellsInsure[2])
-      + row('<strong>Итого (' + cfg.labels.countryShort + ')</strong>', cellsSumCtry[0], cellsSumCtry[1], cellsSumCtry[2], STYLE_TOTAL_ROW)
+      + row('Итого (' + cfg.labels.countryShort + ')', cellsSumCtry[0], cellsSumCtry[1], cellsSumCtry[2], STYLE_TOTAL_TR, STYLE_TOTAL_TH)
 
-      + '<tr><th colspan="4" ' + STYLE_SECTION + '>Расходы в России</th></tr>'
+      + '<tr ' + STYLE_SECTION_TR + '><th colspan="4">Расходы в России</th></tr>'
       + row('Таможенная пошлина', '', addCur(convert(dutyR,'RUB','USD'),'USD'), addCur(dutyR,'₽'))
       + row('Утилизационный сбор','', addCur(convert(utilR,'RUB','USD'),'USD'), addCur(utilR,'₽'))
       + row('Выгрузка/СВХ/оформление/СБКТС/доставка','', addCur(convert(svh,'RUB','USD'),'USD'), addCur(svh,'₽'))
       + row('Расходы лаборатории','', addCur(convert(lab,'RUB','USD'),'USD'), addCur(lab,'₽'))
       + row('Комиссия WinAuto','', addCur(convert(fee,'RUB','USD'),'USD'), addCur(fee,'₽'))
-      + row('<strong>Итого (Россия)</strong>', '', addCur(convert(sumRU,'RUB','USD'),'USD'), addCur(sumRU,'₽'), STYLE_TOTAL_ROW)
+      + row('Итого (Россия)', '', addCur(convert(sumRU,'RUB','USD'),'USD'), addCur(sumRU,'₽'), STYLE_TOTAL_TR, STYLE_TOTAL_TH)
       + '</tbody></table></div>';
 
     return html;
@@ -402,6 +410,9 @@ document.addEventListener('DOMContentLoaded', function () {
       elResult.innerHTML = renderCN({ priceCNY: priceCNY, ageCat: ageCat, engineCc: engineCc });
     }
   }
+
+  if (elCalcBtn) elCalcBtn.addEventListener('click', buildResult);
+});
 
   if (elCalcBtn) elCalcBtn.addEventListener('click', buildResult);
 });
