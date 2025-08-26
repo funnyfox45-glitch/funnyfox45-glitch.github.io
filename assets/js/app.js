@@ -1,3 +1,4 @@
+(function(){ try {
 /* ===== WinAuto — фронтенд (с расчётом JP/KR/CN) — визуальные правки итогов ===== */
 document.addEventListener('DOMContentLoaded', function () {
   // Год
@@ -422,6 +423,8 @@ try {
 
   if (elCalcBtn) elCalcBtn.addEventListener('click', buildResult);
 });
+  } catch (e) { console.error('[app.js FATAL]', e); } })();
+
 
   if (elCalcBtn) elCalcBtn.addEventListener('click', buildResult);
 });
