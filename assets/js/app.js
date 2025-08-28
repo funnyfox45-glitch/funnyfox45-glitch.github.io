@@ -366,9 +366,9 @@ try {
       price: args.priceKRW,
       ageCat: args.ageCat,
       engineCc: args.engineCc,
-      inside: 1500000,
+      inside: 2000000,
       freight: 1000000,
-      insure: 150000
+      insure: 1500000
     });
   }
 
